@@ -1,11 +1,14 @@
 {{ block "session" . }}
-<main class="grow">
-  <h1 class="text-4xl">{{ .Name }}</h1>
+<main class="grow flex flex-col space-y-8">
+  <div class="flex">
+    <h1 class="grow text-4xl">{{ .SessionName }}</h1>
+    <button class="border rounded border-black px-2 py-1 text-lg hover:scale-105 transition duration-200">Restart</button>
+  </div>
   {{ template "users" .}}
 </main>
-<footer class="">
-  <div class="flex items-center justify-center" hx-ext="ws" ws-connect="/ws/{{ .Id }}/{{ .UserName }}">
-    <fieldset class="flex space-x-2">
+<footer class="flex items-center justify-center mb-96 mt-8">
+  <div class="max-w-full" hx-ext="ws" ws-connect="/ws/{{ .SessionId }}/{{ .MyUserName }}">
+    <fieldset class="flex flex-wrap space-x-2 space-y-2 items-center justify-center">
       {{ range .Scale }}
       <input
         class="peer/{{ . }} hidden"
@@ -16,7 +19,7 @@
         value="{{ . }}"
       />
       <label
-        class="peer-checked/{{ . }}:bg-sky-200 text-xl rounded border border-black p-2 w-16 text-center"
+        class="hover:cursor-pointer transition duration-200 hover:scale-105 peer-checked/{{ . }}:bg-sky-200 text-xl rounded border border-black p-2 w-16 text-center"
         for="{{ . }}"
         >
         {{ . }}
@@ -31,7 +34,7 @@
         value="?"
       />
       <label
-        class="peer-checked/?:bg-sky-200 text-xl rounded border border-black p-2 w-16 text-center"
+        class="hover:cursor-pointer transition duration-200 hover:scale-105 peer-checked/?:bg-sky-200 text-xl rounded border border-black p-2 w-16 text-center"
         for="?"
         >
         ?
@@ -42,9 +45,28 @@
 {{ end }}
 
 {{ block "users" . }}
-<ul class="" id="users">
-  {{ range .Users }}
-  <li>{{ . }}</li>
-  {{ end }}
-</ul>
+<div>
+  <table class="border-separate border-spacing-3">
+    <tbody>
+      <tr>
+        <td class="text-xl font-bold">
+          {{ .MyUserName }}
+        </td>
+        <td class="text-lg rounded border p-1 border-sky-300 text-sky-300">
+          Voting...
+        </td>
+      </tr>
+      {{ range .OtherUsers }}
+      <tr>
+        <td class="text-xl">
+          {{ . }}
+        </td>
+        <td class="text-lg rounded border p-1 border-sky-300 text-sky-300">
+          Voting...
+        </td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</div>
 {{ end }}

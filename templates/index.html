@@ -1,7 +1,7 @@
 {{ define "title" }}Pointing Poker{{ end }}
 
 {{ define "content" }}
-<main class="grow">
+<main class="flex flex-col space-y-16">
   <h1 class="text-4xl">Pointing Poker</h1>
   <div class="w-2/3 ml-auto mr-auto">
     <form
@@ -63,7 +63,7 @@
           </tr>
         </tbody>
       </table>
-      <button class="border border-black rounded px-2 py-1" type="submit">
+      <button class="border border-black rounded px-2 py-1 transition duration-200 hover:scale-105" type="submit">
         Create Session
       </button>
     </form>

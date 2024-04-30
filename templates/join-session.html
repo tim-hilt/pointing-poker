@@ -1,10 +1,10 @@
-{{ define "title" }}Pointing Poker | {{ .Name }}{{ end }}
+{{ define "title" }}Pointing Poker | {{ .SessionName }}{{ end }}
 
 {{ define "content" }}
-    <main class="grow">
-      <h1 class="text-4xl">Join {{ .Name }}</h1>
+    <main class="flex flex-col space-y-16">
+      <h1 class="text-4xl">Join {{ .SessionName }}</h1>
       <div class="w-2/3 ml-auto mr-auto">
-        <form class="flex items-center flex-col" hx-post="/join-session/{{ .Id }}" hx-target="body">
+        <form class="flex items-center flex-col" hx-post="/join-session/{{ .SessionId }}" hx-target="body">
           <table class="border-separate border-spacing-2">
             <tbody>
               <tr>
@@ -22,7 +22,7 @@
               </tr>
             </tbody>
           </table>
-          <button class="border border-black rounded px-2 py-1" type="submit">
+          <button class="border border-black rounded px-2 py-1 hover:scale-105 transition duration-200" type="submit">
             Join
           </button>
         </form>

@@ -63,18 +63,20 @@ func (s *Session) handleBroadcast() {
 			case USER_LEFT:
 				fallthrough
 			case USER_JOINED:
-				if userName == data.UserName {
+				log.Println(data.MyUserName, "joined session", data.SessionId)
+				if userName == data.MyUserName {
 					continue
 				}
 				templates.ExecuteTemplate(&buf, "users", Data{
-					Users: s.getUsers(),
+					MyUserName: userName,
+					OtherUsers: s.getOtherUsers(userName),
 				})
 				err := user.Connection.Write(context.Background(), websocket.MessageText, buf.Bytes())
 				if err != nil {
 					log.Println("Error broadcasting message:", err)
 				}
 			case USER_VOTED:
-				log.Println(data.UserName, "voted:", data.Vote)
+				log.Println(data.MyUserName, "voted:", data.Vote)
 
 				vote, err := strconv.Atoi(data.Vote)
 				if err != nil {
@@ -107,9 +109,12 @@ func (s *Session) handleBroadcast() {
 	}
 }
 
-func (s *Session) getUsers() []string {
+func (s *Session) getOtherUsers(me string) []string {
 	users := make([]string, 0, len(s.Users))
-	for _, user := range s.Users {
+	for userName, user := range s.Users {
+		if userName == me {
+			continue
+		}
 		users = append(users, user.Name)
 	}
 	return users
@@ -125,14 +130,16 @@ const (
 	RESET
 )
 
+// TODO: Evaluate whether this struct is really necessary & if all
+// values are even used
 type Data struct {
-	event    Event
-	Scale    util.Scale
-	Name     string   `json:"name"`
-	UserName string   `json:"userName"`
-	Users    []string `json:"users"`
-	Id       string   `json:"id"`
-	Vote     string   `json:"vote"`
+	event       Event
+	Scale       util.Scale
+	SessionName string   `json:"name"`
+	MyUserName  string   `json:"userName"`
+	OtherUsers  []string `json:"users"`
+	SessionId   string   `json:"id"`
+	Vote        string   `json:"vote"`
 }
 
 var templates = template.Must(template.ParseFiles("templates/blocks.html"))
@@ -151,7 +158,6 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userName := r.PathValue("username")
-	log.Println(userName, "joined session", id)
 	c, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		log.Println("Could not accept connection", err)
@@ -170,15 +176,16 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 	defer delete(session.Users, userName)
 
 	session.broadcast <- Data{
-		event:    USER_JOINED,
-		UserName: userName,
+		event:      USER_JOINED,
+		MyUserName: userName,
+		SessionId:  id,
 	}
 
 	for {
 		_, d, err := c.Read(r.Context())
 		if websocket.CloseStatus(err) == websocket.StatusNormalClosure || websocket.CloseStatus(err) == websocket.StatusGoingAway {
 			log.Println("Connection to", userName, "closed by client")
-			session.broadcast <- Data{event: USER_LEFT, UserName: userName}
+			session.broadcast <- Data{event: USER_LEFT, MyUserName: userName}
 			break
 		}
 
@@ -188,7 +195,7 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 
 		log.Println(userName, "received data", string(d))
 
-		data := &Data{event: USER_VOTED, UserName: userName}
+		data := &Data{event: USER_VOTED, MyUserName: userName}
 		err = json.Unmarshal(d, data)
 		if err != nil {
 			log.Println("Error unmarshaling JSON:", err)
@@ -227,10 +234,10 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("HX-Push-Url", "/"+sessionId)
 	templates.ExecuteTemplate(w, "session", Data{
-		Scale:    util.Scales[scale],
-		UserName: userName,
-		Id:       sessionId,
-		Name:     sessions[sessionId].Name,
+		Scale:       util.Scales[scale],
+		MyUserName:  userName,
+		SessionId:   sessionId,
+		SessionName: sessions[sessionId].Name,
 	})
 }
 
@@ -244,7 +251,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	name := sessions[id].Name
-	templateJoinSession.Execute(w, Data{Id: id, Name: name})
+	templateJoinSession.Execute(w, Data{SessionId: id, SessionName: name})
 }
 
 func joinSession(w http.ResponseWriter, r *http.Request) {
@@ -266,11 +273,11 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 	userName := form.Get("username")
 	session := sessions[id]
 	templates.ExecuteTemplate(w, "session", Data{
-		Scale:    session.scale,
-		Users:    session.getUsers(),
-		UserName: userName,
-		Id:       id,
-		Name:     session.Name,
+		Scale:       session.scale,
+		OtherUsers:  session.getOtherUsers(userName),
+		MyUserName:  userName,
+		SessionId:   id,
+		SessionName: session.Name,
 	})
 }
 
