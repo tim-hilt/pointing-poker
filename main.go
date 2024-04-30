@@ -135,7 +135,9 @@ type Data struct {
 	Vote     string   `json:"vote"`
 }
 
-var templates = template.Must(template.ParseGlob("templates/*.html"))
+var templates = template.Must(template.ParseFiles("templates/blocks.html"))
+var templateIndex = template.Must(template.ParseFiles("templates/base.html", "templates/index.html"))
+var templateJoinSession = template.Must(template.ParseFiles("templates/base.html", "templates/join-session.html"))
 var sessions = make(map[string]*Session)
 
 func handleWsConnection(w http.ResponseWriter, r *http.Request) {
@@ -241,8 +243,8 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	Name := sessions[id].Name
-	templates.ExecuteTemplate(w, "join-session", Data{Id: id, Name: Name})
+	name := sessions[id].Name
+	templateJoinSession.Execute(w, Data{Id: id, Name: name})
 }
 
 func joinSession(w http.ResponseWriter, r *http.Request) {
@@ -273,7 +275,7 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
-	templates.ExecuteTemplate(w, "index", nil)
+	templateIndex.Execute(w, nil)
 }
 
 func getFavicon(w http.ResponseWriter, r *http.Request) {

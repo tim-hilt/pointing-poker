@@ -1,193 +1,72 @@
-{{ define "base" }}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ template "title" . }}</title>
-    <script
-      src="https://unpkg.com/htmx.org@1.9.12"
-      integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2"
-      crossorigin="anonymous"
-    ></script>
-    <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/ws.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="p-4 flex flex-col min-h-dvh">
-    {{ template "content" . }}
-  </body>
-</html>
-{{ end }}
+{{ define "title" }}Pointing Poker{{ end }}
 
-{{ block "index" . }}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pointing Poker</title>
-    <script
-      src="https://unpkg.com/htmx.org@1.9.12"
-      integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2"
-      crossorigin="anonymous"
-    ></script>
-    <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/ws.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="p-4 flex flex-col min-h-dvh">
-    <main class="grow">
-      <h1 class="text-4xl">Pointing Poker</h1>
-      <div class="w-2/3 ml-auto mr-auto">
-        <form class="flex items-center flex-col" hx-post="/create-session" hx-target="body">
-          <table class="border-separate border-spacing-2">
-            <tbody>
-              <tr>
-                <td align="right">
-                  <label class="text-right text-nowrap" for="session-name"
-                    >Session Name</label
-                  >
-                </td>
-                <td>
-                  <input
-                    class="border border-black px-2 py-1 rounded w-full"
-                    name="session-name"
-                    autofocus
-                    required
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td align="right">
-                  <label class="text-right text-nowrap" for="username">Username</label>
-                </td>
-                <td>
-                  <input
-                    class="border border-black px-2 py-1 rounded w-full"
-                    name="username"
-                    required
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td align="right">
-                  <label class="text-right text-nowrap" for="scale">Scale</label>
-                </td>
-                <td>
-                  <select class="border border-black px-2 py-1 rounded" name="scale" required>
-                    <option hidden value="" selected>Choose a Scale</option>
-                    <!-- TODO: Maybe I should render these from a variable -->
-                    <option value="fibonacci">Fibonacci (1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144)</option>
-                    <option value="workingdays">Working Days (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)</option>
-                  </select>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <button class="border border-black rounded px-2 py-1" type="submit">
-            Create Session
-          </button>
-        </form>
-      </div>
-    </main>
-  </body>
-</html>
-{{ end }}
-
-<!-- TODO: Should use a base-template and inject -->
-{{ block "join-session" . }}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pointing Poker | {{ .Name }}</title>
-    <script
-      src="https://unpkg.com/htmx.org@1.9.12"
-      integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2"
-      crossorigin="anonymous"
-    ></script>
-    <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/ws.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="p-4 flex flex-col min-h-dvh">
-    <main class="grow">
-      <h1 class="text-4xl">Join {{ .Name }}</h1>
-      <div class="w-2/3 ml-auto mr-auto">
-        <form class="flex items-center flex-col" hx-post="/join-session/{{ .Id }}" hx-target="body">
-          <table class="border-separate border-spacing-2">
-            <tbody>
-              <tr>
-                <td align="right">
-                  <label class="text-right" for="username">Username</label>
-                </td>
-                <td>
-                  <input
-                    class="border border-black px-2 py-1 rounded"
-                    name="username"
-                    required
-                    autofocus
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <button class="border border-black rounded px-2 py-1" type="submit">
-            Join
-          </button>
-        </form>
-      </div>
-    </main>
-  </body>
-</html>
-{{ end }}
-
-{{ block "session" . }}
+{{ define "content" }}
 <main class="grow">
-  <h1 class="text-4xl">{{ .Name }}</h1>
-  {{ template "users" .}}
-</main>
-<footer class="">
-  <div class="flex items-center justify-center" hx-ext="ws" ws-connect="/ws/{{ .Id }}/{{ .UserName }}">
-    <fieldset class="flex space-x-2">
-      {{ range .Scale }}
-      <input
-        class="peer/{{ . }} hidden"
-        ws-send
-        type="radio"
-        id="{{ . }}"
-        name="vote"
-        value="{{ . }}"
-      />
-      <label
-        class="peer-checked/{{ . }}:bg-sky-200 text-xl rounded border border-black p-2 w-16 text-center"
-        for="{{ . }}"
-        >
-        {{ . }}
-      </label>
-      {{ end }}
-      <input
-        class="peer/? hidden"
-        ws-send
-        type="radio"
-        id="?"
-        name="vote"
-        value="?"
-      />
-      <label
-        class="peer-checked/?:bg-sky-200 text-xl rounded border border-black p-2 w-16 text-center"
-        for="?"
-        >
-        ?
-      </label>
-    </fieldset>
+  <h1 class="text-4xl">Pointing Poker</h1>
+  <div class="w-2/3 ml-auto mr-auto">
+    <form
+      class="flex items-center flex-col"
+      hx-post="/create-session"
+      hx-target="body"
+    >
+      <table class="border-separate border-spacing-2">
+        <tbody>
+          <tr>
+            <td align="right">
+              <label class="text-right text-nowrap" for="session-name"
+                >Session Name</label
+              >
+            </td>
+            <td>
+              <input
+                class="border border-black px-2 py-1 rounded w-full"
+                name="session-name"
+                autofocus
+                required
+              />
+            </td>
+          </tr>
+          <tr>
+            <td align="right">
+              <label class="text-right text-nowrap" for="username"
+                >Username</label
+              >
+            </td>
+            <td>
+              <input
+                class="border border-black px-2 py-1 rounded w-full"
+                name="username"
+                required
+              />
+            </td>
+          </tr>
+          <tr>
+            <td align="right">
+              <label class="text-right text-nowrap" for="scale">Scale</label>
+            </td>
+            <td>
+              <select
+                class="border border-black px-2 py-1 rounded"
+                name="scale"
+                required
+              >
+                <option hidden value="" selected>Choose a Scale</option>
+                <!-- TODO: Maybe I should render these from a variable -->
+                <option value="fibonacci">
+                  Fibonacci (1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144)
+                </option>
+                <option value="workingdays">
+                  Working Days (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+                </option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <button class="border border-black rounded px-2 py-1" type="submit">
+        Create Session
+      </button>
+    </form>
   </div>
-</footer>
-{{ end }}
-
-{{ block "users" . }}
-<ul class="" id="users">
-  {{ range .Users }}
-  <li>{{ . }}</li>
-  {{ end }}
-</ul>
+</main>
 {{ end }}

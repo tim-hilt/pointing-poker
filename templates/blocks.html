@@ -1,0 +1,50 @@
+{{ block "session" . }}
+<main class="grow">
+  <h1 class="text-4xl">{{ .Name }}</h1>
+  {{ template "users" .}}
+</main>
+<footer class="">
+  <div class="flex items-center justify-center" hx-ext="ws" ws-connect="/ws/{{ .Id }}/{{ .UserName }}">
+    <fieldset class="flex space-x-2">
+      {{ range .Scale }}
+      <input
+        class="peer/{{ . }} hidden"
+        ws-send
+        type="radio"
+        id="{{ . }}"
+        name="vote"
+        value="{{ . }}"
+      />
+      <label
+        class="peer-checked/{{ . }}:bg-sky-200 text-xl rounded border border-black p-2 w-16 text-center"
+        for="{{ . }}"
+        >
+        {{ . }}
+      </label>
+      {{ end }}
+      <input
+        class="peer/? hidden"
+        ws-send
+        type="radio"
+        id="?"
+        name="vote"
+        value="?"
+      />
+      <label
+        class="peer-checked/?:bg-sky-200 text-xl rounded border border-black p-2 w-16 text-center"
+        for="?"
+        >
+        ?
+      </label>
+    </fieldset>
+  </div>
+</footer>
+{{ end }}
+
+{{ block "users" . }}
+<ul class="" id="users">
+  {{ range .Users }}
+  <li>{{ . }}</li>
+  {{ end }}
+</ul>
+{{ end }}
