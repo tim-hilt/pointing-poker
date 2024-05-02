@@ -22,7 +22,7 @@ func RandSeq(n int) string {
 	return string(b)
 }
 
-func average(s []int) float64 {
+func Average(s []int) float64 {
 	average := 0.0
 	for _, v := range s {
 		average += float64(v)
@@ -30,26 +30,23 @@ func average(s []int) float64 {
 	return average / float64(len(s))
 }
 
-func median(s []int) float64 {
+func Median(s []int) float64 {
 	sCopy := make([]int, len(s))
 	copy(sCopy, s)
 
 	slices.Sort(sCopy)
 
-	var median float64
 	l := len(sCopy)
 	if l == 0 {
 		return 0
 	} else if l%2 == 0 {
-		median = float64((sCopy[l/2-1] + sCopy[l/2]) / 2.0)
+		return Average(sCopy[l/2-1 : l/2+1])
 	} else {
-		median = float64(sCopy[l/2])
+		return float64(sCopy[l/2])
 	}
-
-	return median
 }
 
-func recommendation(av float64, med float64, scale Scale) int {
+func Recommendation(av float64, med float64, scale Scale) int {
 	a := (av + med) / 2
 	for _, entry := range scale {
 		if float64(entry) >= a {
