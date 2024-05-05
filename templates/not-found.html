@@ -1,0 +1,10 @@
+{{ define "title" }}Pointing Poker | Not Found {{ .SessionId }}{{ end }}
+
+{{ define "content" }}
+<main class="flex flex-col space-y-16">
+    <div class="flex items-center justify-center">
+        <h1 class="text-4xl">Session with ID {{ .SessionId }} not found</h1>
+    </div>
+    {{ template "form-create-session" }}
+</main>
+{{ end }}

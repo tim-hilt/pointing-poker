@@ -54,11 +54,14 @@ type Data struct {
 }
 
 var templates = template.Must(template.ParseGlob("templates/*.html"))
-var templateIndex = template.Must(template.ParseFiles("templates/base.html", "templates/index.html"))
+var templateIndex = template.Must(template.ParseFiles("templates/base.html", "templates/index.html", "templates/blocks.html"))
 var templateJoinSession = template.Must(template.ParseFiles("templates/base.html", "templates/join-session.html"))
+var templateNotFound = template.Must(template.ParseFiles("templates/base.html", "templates/not-found.html", "templates/blocks.html"))
 
 var lockSessions sync.RWMutex
 var sessions = make(map[string]*Session)
+
+// TODO: Reloading an active session if user is only one left shouldn't go to the join-session dialog
 
 func index(w http.ResponseWriter, r *http.Request) {
 	// TODO: Log info about requester (ip, ...)
@@ -134,7 +137,7 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 		util.Logger.Warn("session does not exist", "sessionId", sessionId)
 		w.WriteHeader(http.StatusNotFound)
 
-		err := templates.ExecuteTemplate(w, "not-found", Data{
+		err := templateNotFound.Execute(w, Data{
 			SessionId: sessionId,
 		})
 		if err != nil {
@@ -177,7 +180,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 		util.Logger.Warn("session does not exist", "sessionId", sessionId)
 		w.WriteHeader(http.StatusNotFound)
 
-		err := templates.ExecuteTemplate(w, "not-found", Data{
+		err := templateNotFound.Execute(w, Data{
 			SessionId: sessionId,
 		})
 		if err != nil {
@@ -209,7 +212,8 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 	if _, ok := sessions[sessionId]; !ok {
 		util.Logger.Warn("session does not exist", "sessionId", sessionId)
 		w.WriteHeader(http.StatusNotFound)
-		err := templates.ExecuteTemplate(w, "not-found", Data{
+
+		err := templateNotFound.Execute(w, Data{
 			SessionId: sessionId,
 		})
 		if err != nil {

@@ -120,8 +120,70 @@
   {{ end }}
 {{ end }}
 
-{{ block "not-found" . }}
-<div class="flex items-center justify-center">
-  <h1 class="text-4xl">Session with ID {{ .SessionId }} not found</h1>
-</div>
+{{ define "form-create-session" }}
+  <div class="w-2/3 ml-auto mr-auto">
+    <form
+      class="flex items-center flex-col"
+      hx-post="/create-session"
+      hx-target="body"
+    >
+      <table class="border-separate border-spacing-2">
+        <tbody>
+          <tr>
+            <td align="right">
+              <label class="text-right text-nowrap" for="session-name"
+                >Session Name</label
+              >
+            </td>
+            <td>
+              <input
+                class="border border-emerald-50 px-2 py-1 rounded w-full bg-black"
+                name="session-name"
+                autofocus
+                required
+              />
+            </td>
+          </tr>
+          <tr>
+            <td align="right">
+              <label class="text-right text-nowrap" for="username"
+                >Username</label
+              >
+            </td>
+            <td>
+              <input
+                class="border border-emerald-50 px-2 py-1 rounded w-full bg-black"
+                name="username"
+                required
+              />
+            </td>
+          </tr>
+          <tr>
+            <td align="right">
+              <label class="text-right text-nowrap" for="scale">Scale</label>
+            </td>
+            <td>
+              <select
+                class="border border-emerald-50 px-2 py-1 rounded bg-black"
+                name="scale"
+                required
+              >
+                <option hidden value="" selected>Choose a Scale</option>
+                <!-- TODO: Maybe I should render these from a variable -->
+                <option value="fibonacci">
+                  Fibonacci (1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144)
+                </option>
+                <option value="workingdays">
+                  Working Days (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+                </option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <button class="border border-emerald-50 rounded px-2 py-1 transition duration-200 hover:scale-105" type="submit">
+        Create Session
+      </button>
+    </form>
+  </div>
 {{ end }}
