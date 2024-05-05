@@ -16,8 +16,6 @@ import (
 	"nhooyr.io/websocket"
 )
 
-// TODO: Change ssh port
-
 type Event int
 
 const (
@@ -308,6 +306,8 @@ func main() {
 	cert := path.Join(certDir, "fullchain.pem")
 	key := path.Join(certDir, "privkey.pem")
 
+	util.Logger.Info("starting server")
+
 	if _, err := os.Stat(certDir); err == nil {
 		// certificate found
 		go http.ListenAndServeTLS("0.0.0.0:443", cert, key, nil)
@@ -317,7 +317,6 @@ func main() {
 		}
 
 	} else if errors.Is(err, os.ErrNotExist) {
-		// certificate not found, run on localhost only
 		err := http.ListenAndServe(":8000", nil)
 		if err != nil {
 			util.Logger.Error("server exited unexpectedly", "error", err)

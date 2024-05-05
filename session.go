@@ -133,6 +133,7 @@ func (s *Session) handleMessageAllUsers(data Data) {
 	var buf bytes.Buffer
 
 	if data.event == RESET {
+		util.Logger.Info("restarting session", "sessionName", s.Name, "user", data.MyUser.Name)
 		for _, user := range s.Users {
 			user.Vote = -1
 		}
@@ -190,7 +191,7 @@ func (s *Session) handleMessageAllUsers(data Data) {
 				util.Logger.Error("could not write message to user", "message", buf.String(), "sessionName", s.Name, "user", data.MyUser.Name, "error", err)
 			}
 		case RESET:
-			err := templates.ExecuteTemplate(&buf, "session", Data{
+			err := templates.ExecuteTemplate(&buf, "session-content", Data{
 				MyUser:      user,
 				OtherUsers:  s.getOtherUsers(userName),
 				Scale:       s.scale,

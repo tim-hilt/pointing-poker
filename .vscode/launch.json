@@ -5,11 +5,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch file",
+      "name": "Debug Application",
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "program": "${workspaceFolder}/main.go"
+      "program": "."
     }
   ]
 }
