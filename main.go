@@ -62,6 +62,7 @@ var lockSessions sync.RWMutex
 var sessions = make(map[string]*Session)
 
 // TODO: Reloading an active session if user is only one left shouldn't go to the join-session dialog
+// TODO: Load username from localstorage; see ChatGPT
 
 func index(w http.ResponseWriter, r *http.Request) {
 	// TODO: Log info about requester (ip, ...)
