@@ -95,31 +95,26 @@
 {{ end }}
 
 {{ block "other-users" . }}
-  {{ if .AllVoted }}
-    {{ range .OtherUsers }}
-      <tr id="user-{{ .Name }}">
-        <td class="text-xl">
-          {{ .Name }}
-        </td>
-        <td class="text-lg rounded border p-1 border-sky-300 text-sky-300 text-center">
-          {{ .Vote }}
-        </td>
-      </tr>
-    {{ end }}
-  {{ else }}
-    {{ range .OtherUsers }}
-      <tr id="user-{{ .Name }}">
-        <td class="text-xl">
-          {{ .Name }}
-        </td>
-        <td class="text-lg rounded border p-1 border-sky-300 text-sky-300 text-center">
-          {{ if eq .Vote -1 }}
-          Voting...
-          {{ else }}
-          Voted
-          {{ end }}
-        </td>
-      </tr>
-    {{ end }}
+  {{ range .OtherUsers }}
+    <tr id="user-{{ .Name }}">
+      <td class="text-xl">
+        {{ .Name }}
+      </td>
+      <td class="text-lg rounded border p-1 border-sky-300 text-sky-300 text-center">
+        {{ if eq .Vote -1 }}
+        Voting...
+        {{ else if $.AllVoted }}
+        {{ .Vote }}
+        {{ else }}
+        Voted
+        {{ end }}
+      </td>
+    </tr>
   {{ end }}
+{{ end }}
+
+{{ block "not-found" . }}
+<div class="flex items-center justify-center">
+  <h1 class="text-4xl">Session with ID {{ .SessionId }} not found</h1>
+</div>
 {{ end }}

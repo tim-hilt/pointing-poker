@@ -1,9 +1,13 @@
 package util
 
 import (
+	"log/slog"
 	"math/rand"
+	"os"
 	"slices"
 )
+
+var Logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 
