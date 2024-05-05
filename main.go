@@ -2,17 +2,21 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
+	"os"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/tim-hilt/go-stdlib-htmx/util"
+	"github.com/tim-hilt/pointing-poker-websockets/util"
 	"nhooyr.io/websocket"
 )
+
+// TODO: Change ssh port
 
 type Event int
 
@@ -59,6 +63,7 @@ var lockSessions sync.RWMutex
 var sessions = make(map[string]*Session)
 
 func index(w http.ResponseWriter, r *http.Request) {
+	// TODO: Log info about requester (ip, ...)
 	route := "/"
 	util.Logger.Info("incoming request", "route", route)
 	err := templateIndex.Execute(w, nil)
@@ -299,5 +304,26 @@ func main() {
 	http.HandleFunc("GET /{id}", getSession)
 	http.HandleFunc("GET /ws/{id}/{username}", handleWsConnection)
 
-	log.Fatal(http.ListenAndServe("0.0.0.0:8000", nil))
+	certDir := "/etc/letsencrypt/live/pointing-poker.duckdns.org"
+	cert := path.Join(certDir, "fullchain.pem")
+	key := path.Join(certDir, "privkey.pem")
+
+	if _, err := os.Stat(certDir); err == nil {
+		// certificate found
+		go http.ListenAndServeTLS("0.0.0.0:443", cert, key, nil)
+		err := http.ListenAndServe("0.0.0.0:80", nil)
+		if err != nil {
+			util.Logger.Error("server exited unexpectedly", "error", err)
+		}
+
+	} else if errors.Is(err, os.ErrNotExist) {
+		// certificate not found, run on localhost only
+		err := http.ListenAndServe(":8000", nil)
+		if err != nil {
+			util.Logger.Error("server exited unexpectedly", "error", err)
+		}
+	} else {
+		util.Logger.Error("unexpected error", "error", err)
+
+	}
 }

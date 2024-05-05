@@ -1,4 +1,4 @@
-module github.com/tim-hilt/go-stdlib-htmx
+module github.com/tim-hilt/pointing-poker-websockets
 
 go 1.22.2
 

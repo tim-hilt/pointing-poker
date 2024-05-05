@@ -5,7 +5,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/tim-hilt/go-stdlib-htmx/util"
+	"github.com/tim-hilt/pointing-poker-websockets/util"
 	"nhooyr.io/websocket"
 )
 
