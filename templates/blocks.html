@@ -1,5 +1,5 @@
 {{ block "session" . }}
-<main id="session" class="grow flex flex-col space-y-8" hx-ext="ws" ws-connect="/ws/{{ .SessionId }}/{{ .MyUser.Name }}">
+<main id="session" class="grow flex flex-col space-y-8" hx-ext="ws" ws-connect="/ws/{{ .SessionId }}">
   {{ template "session-content" . }}
 </main>
 {{ end }}
@@ -120,13 +120,12 @@
   {{ end }}
 {{ end }}
 
-{{ define "form-create-session" }}
+{{ block "form-create-session" . }}
   <div class="w-2/3 ml-auto mr-auto">
     <form
       class="flex items-center flex-col"
       hx-post="/create-session"
       hx-target="body"
-      id="create-session"
     >
       <table class="border-separate border-spacing-2">
         <tbody>
@@ -145,6 +144,7 @@
               />
             </td>
           </tr>
+          {{ if not .MyUser.Name }}
           <tr>
             <td align="right">
               <label class="text-right text-nowrap" for="username"
@@ -155,11 +155,11 @@
               <input
                 class="border border-emerald-50 px-2 py-1 rounded w-full bg-black"
                 name="username"
-                id="username"
                 required
               />
             </td>
           </tr>
+          {{ end }}
           <tr>
             <td align="right">
               <label class="text-right text-nowrap" for="scale">Scale</label>

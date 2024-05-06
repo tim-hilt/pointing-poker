@@ -14,25 +14,5 @@
   </head>
   <body class="p-4 flex flex-col min-h-dvh bg-black text-emerald-50">
     {{ template "content" . }}
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        const usernameInput = document.getElementById("username");
-        const storedUsername = localStorage.getItem("username");
-        if (storedUsername) {
-          usernameInput.value = storedUsername;
-        }
-
-        document
-          .getElementById("create-session")
-          .addEventListener("submit", function (event) {
-            event.preventDefault();
-
-            const username = usernameInput.value.trim();
-            if (username !== "") {
-              localStorage.setItem("username", username);
-            }
-          });
-      });
-    </script>
   </body>
 </html>

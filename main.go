@@ -57,19 +57,42 @@ var templates = template.Must(template.ParseGlob("templates/*.html"))
 var templateIndex = template.Must(template.ParseFiles("templates/base.html", "templates/index.html", "templates/blocks.html"))
 var templateJoinSession = template.Must(template.ParseFiles("templates/base.html", "templates/join-session.html"))
 var templateNotFound = template.Must(template.ParseFiles("templates/base.html", "templates/not-found.html", "templates/blocks.html"))
+var templateSession = template.Must(template.ParseFiles("templates/base.html", "templates/session.html", "templates/blocks.html"))
 
 var lockSessions sync.RWMutex
 var sessions = make(map[string]*Session)
 
 // TODO: Reloading an active session if user is only one left shouldn't go to the join-session dialog
-// TODO: Load username from localstorage; see ChatGPT
+// TODO: Title not updated after creating session
 // TODO: If user joins or votes, its element should flash
+// TODO: Current solution with fixed element for voting-candidates is not good
+// TODO: Safari isn't saving cookies
 
 func index(w http.ResponseWriter, r *http.Request) {
 	// TODO: Log info about requester (ip, ...)
+
 	route := "/"
 	util.Logger.Info("incoming request", "route", route)
-	err := templateIndex.Execute(w, nil)
+
+	cookie, err := r.Cookie("username")
+
+	if errors.Is(err, http.ErrNoCookie) {
+		err = templateIndex.Execute(w, nil)
+		if err != nil {
+			util.Logger.Error("could not execute template", "template", "index", "error", err)
+		}
+		return
+	} else if err != nil {
+		util.Logger.Error("unexpected error while checking cookie", "error", err)
+		return
+	}
+
+	err = templateIndex.Execute(w, Data{
+		MyUser: &User{
+			Name: cookie.Value,
+			Vote: -1,
+		},
+	})
 	if err != nil {
 		util.Logger.Error("could not execute template", "template", "index", "error", err)
 	}
@@ -84,7 +107,7 @@ func getFavicon(w http.ResponseWriter, r *http.Request) {
 }
 
 func newSession(w http.ResponseWriter, r *http.Request) {
-	route := "POST /create-session"
+	route := "POST /create-session" // TODO: These vars could be generated automatically using r
 	util.Logger.Info("incoming request", "route", route)
 
 	err := r.ParseForm()
@@ -97,8 +120,21 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 	sessionName := form.Get("session-name")
 	sessionName = strings.TrimSpace(sessionName)
 
-	userName := form.Get("username")
-	userName = strings.TrimSpace(userName)
+	cookie, err := r.Cookie("username")
+
+	var userName string
+	if errors.Is(err, http.ErrNoCookie) {
+		userName = form.Get("username")
+		userName = strings.TrimSpace(userName)
+		http.SetCookie(w, &http.Cookie{
+			Name:  "username",
+			Value: userName,
+		})
+	} else if err != nil {
+		util.Logger.Error("unexpected error while checking cookie", "error", err)
+	} else {
+		userName = cookie.Value
+	}
 
 	scale := form.Get("scale")
 	sessionId := util.RandSeq(16)
@@ -130,6 +166,66 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func getSession(w http.ResponseWriter, r *http.Request) {
+	sessionId := r.PathValue("id")
+	route := fmt.Sprintf("GET /%s", sessionId)
+	util.Logger.Info("incoming request", "route", route)
+
+	cookie, err := r.Cookie("username")
+
+	user := &User{
+		Name: "",
+		Vote: -1,
+	}
+
+	if errors.Is(err, http.ErrNoCookie) {
+		util.Logger.Info("new user wants to join session")
+	} else if err != nil {
+		util.Logger.Error("unexpected error while checking cookie", "error", err)
+	} else {
+		user.Name = cookie.Value
+	}
+
+	if _, ok := sessions[sessionId]; !ok {
+		util.Logger.Warn("session does not exist", "sessionId", sessionId)
+		w.WriteHeader(http.StatusNotFound)
+
+		err := templateNotFound.Execute(w, Data{
+			SessionId: sessionId,
+			MyUser:    user,
+		})
+		if err != nil {
+			util.Logger.Error("could not execute template", "template", "not-found", "route", route, "error", err, "sessionId", sessionId)
+		}
+		return
+	}
+
+	if len(user.Name) > 0 {
+		session := sessions[sessionId]
+		err = templateSession.Execute(w, Data{
+			MyUser:      user,
+			OtherUsers:  session.getOtherUsers(user.Name),
+			SessionId:   session.Id,
+			SessionName: session.Name,
+			Scale:       session.scale,
+		})
+		if err != nil {
+			util.Logger.Error("could not execute template", "template", "session", "sessionName", session.Name, "error", err)
+		}
+		return
+	}
+
+	sessionName := sessions[sessionId].Name
+	err = templateJoinSession.Execute(w, Data{
+		SessionId:   sessionId,
+		SessionName: sessionName,
+	})
+
+	if err != nil {
+		util.Logger.Error("could not execute template", "template", "join-session", "sessionName", sessionName, "error", err)
+	}
+}
+
 func joinSession(w http.ResponseWriter, r *http.Request) {
 	sessionId := r.PathValue("id")
 	route := fmt.Sprintf("POST /join-session/%s", sessionId)
@@ -142,6 +238,7 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 		err := templateNotFound.Execute(w, Data{
 			SessionId: sessionId,
 		})
+
 		if err != nil {
 			util.Logger.Error("could not execute template", "template", "not-found", "route", route, "error", err, "sessionId", sessionId)
 		}
@@ -159,6 +256,11 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 	userName := form.Get("username")
 	userName = strings.TrimSpace(userName)
 
+	http.SetCookie(w, &http.Cookie{
+		Name:  "username",
+		Value: userName,
+	})
+
 	session := sessions[sessionId]
 	err = templates.ExecuteTemplate(w, "session", Data{
 		Scale:       session.scale,
@@ -173,42 +275,27 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getSession(w http.ResponseWriter, r *http.Request) {
-	sessionId := r.PathValue("id")
-	route := fmt.Sprintf("GET /%s", sessionId)
-	util.Logger.Info("incoming request", "route", route)
-
-	if _, ok := sessions[sessionId]; !ok {
-		util.Logger.Warn("session does not exist", "sessionId", sessionId)
-		w.WriteHeader(http.StatusNotFound)
-
-		err := templateNotFound.Execute(w, Data{
-			SessionId: sessionId,
-		})
-		if err != nil {
-			util.Logger.Error("could not execute template", "template", "not-found", "route", route, "error", err, "sessionId", sessionId)
-		}
-		return
-	}
-
-	sessionName := sessions[sessionId].Name
-	err := templateJoinSession.Execute(w, Data{
-		SessionId:   sessionId,
-		SessionName: sessionName,
-	})
-
-	if err != nil {
-		util.Logger.Error("could not execute template", "template", "join-session", "sessionName", sessionName, "error", err)
-	}
-}
-
 func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 	sessionId := r.PathValue("id")
 
-	userName := r.PathValue("username")
-	userName = strings.TrimSpace(userName)
+	// TODO: Rename cookie vars to cookieUsername
+	cookie, err := r.Cookie("username")
 
-	route := fmt.Sprintf("GET /ws/%s/%s", sessionId, userName)
+	if errors.Is(err, http.ErrNoCookie) {
+		util.Logger.Error("username-cookie not set. Could not join session")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("username-cookie not set. Could not join session"))
+		return
+	} else if err != nil {
+		util.Logger.Error("unexpected error while checking cookie", "error", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Something went wrong."))
+		return
+	}
+
+	userName := cookie.Value
+
+	route := fmt.Sprintf("GET /ws/%s", sessionId)
 	util.Logger.Info("incoming request", "route", route)
 
 	if _, ok := sessions[sessionId]; !ok {
@@ -304,9 +391,9 @@ func main() {
 	http.HandleFunc("GET /", index)
 	http.HandleFunc("GET /favicon.ico", getFavicon)
 	http.HandleFunc("POST /create-session", newSession)
-	http.HandleFunc("POST /join-session/{id}", joinSession)
 	http.HandleFunc("GET /{id}", getSession)
-	http.HandleFunc("GET /ws/{id}/{username}", handleWsConnection)
+	http.HandleFunc("POST /join-session/{id}", joinSession)
+	http.HandleFunc("GET /ws/{id}", handleWsConnection)
 
 	certDir := "/etc/letsencrypt/live/pointing-poker.duckdns.org"
 	cert := path.Join(certDir, "fullchain.pem")

@@ -1,8 +1,8 @@
 {{ define "title" }}Pointing Poker{{ end }}
 
-{{ define "content" }}
+{{ block "content" . }}
 <main class="flex flex-col space-y-16">
   <h1 class="text-4xl">Pointing Poker</h1>
-  {{ template "form-create-session" }}
+  {{ template "form-create-session" . }}
 </main>
 {{ end }}
