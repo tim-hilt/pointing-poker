@@ -63,6 +63,7 @@ var sessions = make(map[string]*Session)
 
 // TODO: Reloading an active session if user is only one left shouldn't go to the join-session dialog
 // TODO: Load username from localstorage; see ChatGPT
+// TODO: If user joins or votes, its element should flash
 
 func index(w http.ResponseWriter, r *http.Request) {
 	// TODO: Log info about requester (ip, ...)

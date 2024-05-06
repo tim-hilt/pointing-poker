@@ -24,7 +24,7 @@
             value="{{ . }}"
           />
           <label
-            class="hover:cursor-pointer transition duration-200 hover:scale-105 peer-checked/{{ . }}:bg-emerald-500 text-xl rounded border border-emerald-50 p-2 my-2 mx-2 w-16 text-center"
+            class="hover:cursor-pointer transition duration-200 hover:scale-105 peer-checked/{{ . }}:bg-emerald-500 text-xl rounded border border-emerald-50 peer-checked/{{ . }}:border-emerald-500 peer-checked/{{ . }}:text-emerald-950 p-2 my-2 mx-2 w-16 text-center"
             for="{{ . }}"
             >
             {{ . }}
@@ -39,7 +39,7 @@
             value="?"
           />
           <label
-            class="hover:cursor-pointer transition duration-200 hover:scale-105 peer-checked/?:bg-emerald-500 text-xl rounded border border-emerald-50 p-2 my-2 mx-2 w-16 text-center"
+            class="hover:cursor-pointer transition duration-200 hover:scale-105 peer-checked/?:bg-emerald-500 text-xl rounded border border-emerald-50 peer-checked/?:border-emerald-500 peer-checked/?:text-emerald-950 p-2 my-2 mx-2 w-16 text-center"
             for="?"
             >
             ?
@@ -53,7 +53,7 @@
 {{ block "users" . }}
 <div class="w-full flex" id="users" >
   <div class="w-1/2">
-    <table class="border-separate border-spacing-4">
+    <table class="border-separate border-spacing-4 table-fixed">
       <tbody>
         {{ template "my-user" . }}
         {{ template "other-users" . }}
@@ -89,10 +89,10 @@
           {{ .MyUser.Name }} (Me)
         </td>
         {{ if eq .MyUser.Vote -1 }}
-        <td class="text-lg border-emerald-200 text-emerald-200 rounded border p-1 text-center">
+        <td class="text-lg border-emerald-200 text-emerald-200 rounded border p-1 text-center w-20">
           Voting...
         {{ else }}
-        <td class="text-lg border-emerald-500 text-emerald-500 rounded border p-1 text-center">
+        <td class="text-lg border-emerald-500 text-emerald-500 rounded border p-1 text-center w-20">
           {{ .MyUser.Vote }}
         {{ end }}
         </td>
@@ -106,13 +106,13 @@
         {{ .Name }}
       </td>
       {{ if eq .Vote -1 }}
-      <td class="text-lg border-emerald-200 text-emerald-200 rounded border p-1 text-center">
+      <td class="text-lg border-emerald-200 text-emerald-200 rounded border p-1 text-center w-20">
         Voting...
       {{ else if $.AllVoted }}
-      <td class="text-lg border-emerald-500 text-emerald-500 rounded border p-1 text-center">
+      <td class="text-lg border-emerald-500 text-emerald-500 rounded border p-1 text-center w-20">
         {{ .Vote }}
       {{ else }}
-      <td class="text-lg border-emerald-500 text-emerald-500 rounded border p-1 text-center">
+      <td class="text-lg border-emerald-500 text-emerald-500 rounded border p-1 text-center w-20">
         Voted
       {{ end }}
       </td>
@@ -126,6 +126,7 @@
       class="flex items-center flex-col"
       hx-post="/create-session"
       hx-target="body"
+      id="create-session"
     >
       <table class="border-separate border-spacing-2">
         <tbody>
@@ -154,6 +155,7 @@
               <input
                 class="border border-emerald-50 px-2 py-1 rounded w-full bg-black"
                 name="username"
+                id="username"
                 required
               />
             </td>
