@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -62,36 +63,55 @@ var templateSession = template.Must(template.ParseFiles("templates/base.html", "
 var lockSessions sync.RWMutex
 var sessions = make(map[string]*Session)
 
+// TODO: Name collisions
+// TODO: Test with Chrome
+
 // TODO: Reloading an active session if user is only one left shouldn't go to the join-session dialog
+// TODO: Log info about requester (ip, ...)
 // TODO: Title not updated after creating session
-// TODO: If user joins or votes, its element should flash
 // TODO: Current solution with fixed element for voting-candidates is not good
 // TODO: Safari isn't saving cookies
 
+func newUserNameCookie(userName string) *http.Cookie {
+	return &http.Cookie{
+		Name:     "username",
+		Value:    base64.URLEncoding.EncodeToString([]byte(userName)),
+		Path:     "/",
+		MaxAge:   3600 * 24 * 365 * 5, // 5 years
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	}
+}
+
 func index(w http.ResponseWriter, r *http.Request) {
-	// TODO: Log info about requester (ip, ...)
 
 	route := "/"
 	util.Logger.Info("incoming request", "route", route)
 
-	cookie, err := r.Cookie("username")
+	cookieUserName, err := r.Cookie("username")
+
+	user := &User{
+		Name: "",
+		Vote: -1,
+	}
 
 	if errors.Is(err, http.ErrNoCookie) {
-		err = templateIndex.Execute(w, nil)
-		if err != nil {
-			util.Logger.Error("could not execute template", "template", "index", "error", err)
-		}
-		return
+		util.Logger.Info("new user wants to create session")
 	} else if err != nil {
 		util.Logger.Error("unexpected error while checking cookie", "error", err)
 		return
+	} else {
+		un, err := base64.URLEncoding.DecodeString(cookieUserName.Value)
+		if err != nil {
+			util.Logger.Error("unexpected error while decoding cookie value")
+		}
+		util.Logger.Info("known user wants to create session", "userName", string(un))
+		user.Name = string(un)
 	}
 
 	err = templateIndex.Execute(w, Data{
-		MyUser: &User{
-			Name: cookie.Value,
-			Vote: -1,
-		},
+		MyUser: user,
 	})
 	if err != nil {
 		util.Logger.Error("could not execute template", "template", "index", "error", err)
@@ -120,20 +140,28 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 	sessionName := form.Get("session-name")
 	sessionName = strings.TrimSpace(sessionName)
 
-	cookie, err := r.Cookie("username")
+	cookieUserName, err := r.Cookie("username")
 
-	var userName string
+	user := &User{
+		Name: "",
+		Vote: -1,
+	}
 	if errors.Is(err, http.ErrNoCookie) {
-		userName = form.Get("username")
+		userName := form.Get("username")
 		userName = strings.TrimSpace(userName)
-		http.SetCookie(w, &http.Cookie{
-			Name:  "username",
-			Value: userName,
-		})
+		user.Name = userName
+
+		cookieUserName = newUserNameCookie(userName)
+		http.SetCookie(w, cookieUserName)
 	} else if err != nil {
 		util.Logger.Error("unexpected error while checking cookie", "error", err)
 	} else {
-		userName = cookie.Value
+		un, err := base64.URLEncoding.DecodeString(cookieUserName.Value)
+		if err != nil {
+			util.Logger.Error("unexpected error while decoding cookie value")
+		}
+		util.Logger.Info("known user wants to create session", "userName", string(un))
+		user.Name = string(un)
 	}
 
 	scale := form.Get("scale")
@@ -156,7 +184,7 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("HX-Push-Url", "/"+sessionId)
 	err = templates.ExecuteTemplate(w, "session", Data{
 		Scale:       util.Scales[scale],
-		MyUser:      &User{Name: userName, Vote: -1},
+		MyUser:      user,
 		SessionId:   sessionId,
 		SessionName: sessionName,
 	})
@@ -171,7 +199,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 	route := fmt.Sprintf("GET /%s", sessionId)
 	util.Logger.Info("incoming request", "route", route)
 
-	cookie, err := r.Cookie("username")
+	cookieUserName, err := r.Cookie("username")
 
 	user := &User{
 		Name: "",
@@ -183,7 +211,12 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 	} else if err != nil {
 		util.Logger.Error("unexpected error while checking cookie", "error", err)
 	} else {
-		user.Name = cookie.Value
+		un, err := base64.URLEncoding.DecodeString(cookieUserName.Value)
+		if err != nil {
+			util.Logger.Error("unexpected error while decoding cookie value")
+		}
+		util.Logger.Info("known user wants to create session", "userName", string(un))
+		user.Name = string(un)
 	}
 
 	if _, ok := sessions[sessionId]; !ok {
@@ -256,10 +289,8 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 	userName := form.Get("username")
 	userName = strings.TrimSpace(userName)
 
-	http.SetCookie(w, &http.Cookie{
-		Name:  "username",
-		Value: userName,
-	})
+	cookieUserName := newUserNameCookie(userName)
+	http.SetCookie(w, cookieUserName)
 
 	session := sessions[sessionId]
 	err = templates.ExecuteTemplate(w, "session", Data{
@@ -278,8 +309,7 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 	sessionId := r.PathValue("id")
 
-	// TODO: Rename cookie vars to cookieUsername
-	cookie, err := r.Cookie("username")
+	cookieUserName, err := r.Cookie("username")
 
 	if errors.Is(err, http.ErrNoCookie) {
 		util.Logger.Error("username-cookie not set. Could not join session")
@@ -293,7 +323,16 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userName := cookie.Value
+	user := &User{
+		Name: "",
+		Vote: -1,
+	}
+	un, err := base64.URLEncoding.DecodeString(cookieUserName.Value)
+	if err != nil {
+		util.Logger.Error("unexpected error while decoding cookie value")
+	}
+	util.Logger.Info("known user wants to create session", "userName", string(un))
+	user.Name = string(un)
 
 	route := fmt.Sprintf("GET /ws/%s", sessionId)
 	util.Logger.Info("incoming request", "route", route)
@@ -313,23 +352,19 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 
 	c, err := websocket.Accept(w, r, nil)
 	if err != nil {
-		util.Logger.Error("session could not be joined", "user", userName, "sessionId", sessionId, "error", err)
+		util.Logger.Error("session could not be joined", "user", user.Name, "sessionId", sessionId, "error", err)
 		return
 	}
 
-	user := &User{
-		Name:       userName,
-		Vote:       -1,
-		Connection: c,
-	}
+	user.Connection = c
 
 	session := sessions[sessionId]
 
 	session.Lock()
-	session.Users[userName] = user
+	session.Users[user.Name] = user
 	session.Unlock()
 
-	defer delete(session.Users, userName)
+	defer delete(session.Users, user.Name)
 
 	session.broadcast <- Data{
 		event:     USER_JOINED,
@@ -349,7 +384,7 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 			util.Logger.Error("unknown error", "error", err)
 		}
 
-		util.Logger.Info("message from websocket", "user", userName, "message", string(d))
+		util.Logger.Info("message from websocket", "user", user.Name, "message", string(d))
 
 		wsResponse := &HtmxWsResponse{}
 		err = json.Unmarshal(d, wsResponse)
@@ -369,7 +404,7 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 			}
 
 			session.Lock()
-			session.Users[userName].Vote = vote
+			session.Users[user.Name].Vote = vote
 			session.Unlock()
 
 			data.event = USER_VOTED
@@ -383,7 +418,7 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 	err = c.Close(websocket.StatusNormalClosure, "Connection closed")
 
 	if err != nil {
-		util.Logger.Error("could not close websocket connection", "user", userName, "sessionId", sessionId)
+		util.Logger.Error("could not close websocket connection", "user", user.Name, "sessionId", sessionId)
 	}
 }
 
