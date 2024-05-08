@@ -178,7 +178,6 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 
 	go session.handleBroadcast()
 
-	// TODO: Title not updated
 	w.Header().Add("HX-Push-Url", "/"+sessionId)
 	err = templates.ExecuteTemplate(w, "session", Data{
 		Scale:       scales[scale],
@@ -189,6 +188,18 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logger.Error("could not execute template", "template", "session", "sessionName", sessionName, "error", err)
+	}
+
+	_, err = w.Write([]byte("<title>Pointing Poker | " + session.Name + "</title>"))
+
+	if err != nil {
+		logger.Error("could not write to response", "session", sessionName, "error", err)
+	}
+
+	_, err = w.Write([]byte("<title>Pointing Poker | " + session.Name + "</title>"))
+
+	if err != nil {
+		logger.Error("could not write to response", "session", sessionName, "error", err)
 	}
 }
 
@@ -291,7 +302,6 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookieUserName)
 
 	session := sessions[sessionId]
-	// TODO: Title (and URL?) not updated
 	err = templates.ExecuteTemplate(w, "session", Data{
 		Scale:       session.scale,
 		OtherUsers:  session.getOtherUsers(userName),
@@ -299,6 +309,7 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 		SessionId:   sessionId,
 		SessionName: session.Name,
 	})
+	w.Write([]byte("<title>Pointing Poker | " + session.Name + "</title>"))
 
 	if err != nil {
 		logger.Error("could not execute template", "template", "session", "sessionName", session.Name, "error", err)
