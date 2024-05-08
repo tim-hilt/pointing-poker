@@ -58,9 +58,7 @@ func (s *Session) handleBroadcast() {
 		case msg := <-s.broadcast:
 			s.handleEvent(msg)
 		case <-time.After(1 * time.Hour):
-			// TODO: Should I execute some template before deleting the session? "session deleted due to inactivity"?
-			logger.Info("deleting session after one hour of inactivity", "session", s.Name)
-			delete(sessions, s.Id)
+			s.handleTimeout()
 			return
 		}
 	}
@@ -81,6 +79,26 @@ func (s *Session) handleEvent(msg Data) {
 	default:
 		logger.Error("should never reach here")
 	}
+}
+
+func (s *Session) handleTimeout() {
+	logger.Info("deleting session after one hour of inactivity", "session", s.Name)
+	s.executeAllUsers(func(user *User) {
+		var buf bytes.Buffer
+		err := templates.ExecuteTemplate(&buf, "timeout", Data{
+			SessionName: s.Name,
+		})
+
+		if err != nil {
+			logger.Error("could not execute template", "template", "timeout", "sessionName", s.Name, "user", user.Name, "error", err)
+		}
+
+		err = user.Connection.Write(context.Background(), websocket.MessageText, buf.Bytes())
+		if err != nil {
+			logger.Error("could not write message to user", "message", buf.String(), "sessionName", s.Name, "user", user.Name, "error", err)
+		}
+	})
+	delete(sessions, s.Id)
 }
 
 func (s *Session) handleUserJoined(msg Data) {

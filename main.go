@@ -63,10 +63,12 @@ var lockSessions sync.RWMutex
 var sessions = make(map[string]*Session)
 
 // TODO: Log info about requester (ip, ...)
-// TODO: Title not updated after creating session
 // TODO: Current solution with fixed element for voting-candidates is not good
 // TODO: Safari isn't saving cookies
-// TODO: Name collisions
+// TODO: username collisions
+// TODO: Serve scripts as static files
+// TODO: Embed templates and scripts in FS
+// TODO: Use session.Id when logging
 
 func newUserNameCookie(userName string) *http.Cookie {
 	return &http.Cookie{
@@ -176,6 +178,7 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 
 	go session.handleBroadcast()
 
+	// TODO: Title not updated
 	w.Header().Add("HX-Push-Url", "/"+sessionId)
 	err = templates.ExecuteTemplate(w, "session", Data{
 		Scale:       scales[scale],
@@ -288,6 +291,7 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookieUserName)
 
 	session := sessions[sessionId]
+	// TODO: Title (and URL?) not updated
 	err = templates.ExecuteTemplate(w, "session", Data{
 		Scale:       session.scale,
 		OtherUsers:  session.getOtherUsers(userName),
@@ -372,6 +376,11 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 
 		if websocket.CloseStatus(err) == websocket.StatusNormalClosure || websocket.CloseStatus(err) == websocket.StatusGoingAway {
 			session.broadcast <- Data{event: USER_LEFT, MyUser: user}
+			break
+		}
+
+		if websocket.CloseStatus(err) == websocket.StatusNoStatusRcvd {
+			logger.Info("websocket connection closed, possibly by timeout?", "session", session.Id, "user", user.Name)
 			break
 		}
 
