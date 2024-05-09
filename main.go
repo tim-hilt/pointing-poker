@@ -66,9 +66,10 @@ var sessions = make(map[string]*Session)
 // TODO: Current solution with fixed element for voting-candidates is not good
 // TODO: Safari isn't saving cookies
 // TODO: username collisions
-// TODO: Serve scripts as static files
 // TODO: Embed templates and scripts in FS
 // TODO: Use session.Id when logging
+// TODO: Instrumentation with Prometheus?
+// TODO: Animation if user voted
 
 func newUserNameCookie(userName string) *http.Cookie {
 	return &http.Cookie{
@@ -444,6 +445,8 @@ func main() {
 	http.HandleFunc("GET /{id}", getSession)
 	http.HandleFunc("POST /join-session/{id}", joinSession)
 	http.HandleFunc("GET /ws/{id}", handleWsConnection)
+
+	http.Handle("GET /scripts/", http.StripPrefix("/scripts/", http.FileServer(http.Dir("./vendored"))))
 
 	certDir := "/etc/letsencrypt/live/pointing-poker.duckdns.org"
 	cert := path.Join(certDir, "fullchain.pem")
