@@ -37,3 +37,21 @@ jobs:
         port: ${{ secrets.PORT }}
         source: pointing-poker
         target: /root/
+
+    - name: Deploy Service File
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        key: ${{ secrets.KEY }}
+        port: ${{ secrets.PORT }}
+        source: deployments/pointing-poker.service
+        target: /etc/systemd/system/
+
+    - name: Restart pointing-poker Service
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        key: ${{ secrets.KEY }}
+        port: ${{ secrets.PORT }}
+        script: systemctl restart pointing-poker
