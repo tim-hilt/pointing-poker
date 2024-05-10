@@ -1,4 +1,4 @@
-module github.com/tim-hilt/pointing-poker-websockets
+module github.com/tim-hilt/pointing-poker
 
 go 1.22
 
