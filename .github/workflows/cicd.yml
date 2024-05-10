@@ -24,41 +24,43 @@ jobs:
     # - name: Test
     #   run: go test -v ./...
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: pointing-poker
-        path: |
-          pointing-poker
-          deployments/pointing-poker.service
+    # - name: Upload Artifact
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: pointing-poker
+    #     path: |
+    #       pointing-poker
+    #       deployments/pointing-poker.service
   deploy:
     needs: build
     runs-on: ubuntu-latest
     steps:
-    - name: Download Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: pointing-poker
+    # - name: Download Artifact
+    #   uses: actions/download-artifact@v4
+    #   with:
+    #     name: pointing-poker
 
-    - name: Deploy Binary
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USER }}
-        key: ${{ secrets.KEY }}
-        port: ${{ secrets.PORT }}
-        source: pointing-poker
-        target: /root/
+    # - name: Deploy Binary
+    #   uses: appleboy/scp-action@v0.1.7
+    #   with:
+    #     host: ${{ secrets.HOST }}
+    #     username: ${{ secrets.USER }}
+    #     key: ${{ secrets.KEY }}
+    #     port: ${{ secrets.PORT }}
+    #     source: pointing-poker
+    #     target: /root/
+    #     overwrite: true
 
-    - name: Deploy Service File
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USER }}
-        key: ${{ secrets.KEY }}
-        port: ${{ secrets.PORT }}
-        source: deployments/pointing-poker.service
-        target: /etc/systemd/system/
+    # - name: Deploy Service File
+    #   uses: appleboy/scp-action@v0.1.7
+    #   with:
+    #     host: ${{ secrets.HOST }}
+    #     username: ${{ secrets.USER }}
+    #     key: ${{ secrets.KEY }}
+    #     port: ${{ secrets.PORT }}
+    #     source: deployments/pointing-poker.service
+    #     target: /etc/systemd/system/
+    #     overwrite: true
 
     - name: Restart pointing-poker Service
       uses: appleboy/ssh-action@v1.0.3
@@ -67,4 +69,4 @@ jobs:
         username: ${{ secrets.USER }}
         key: ${{ secrets.KEY }}
         port: ${{ secrets.PORT }}
-        script: systemctl restart pointing-poker
+        script: cd /root/pointing-poker-websockets && git pull && systemctl restart pointing-poker
