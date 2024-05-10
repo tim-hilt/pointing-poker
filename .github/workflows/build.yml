@@ -17,7 +17,7 @@ jobs:
       with:
         go-version: '1.22'
 
-    - name: Build
+    - name: Go Build
       run: go build -v -ldflags="-s -w"
 
     # No tests as of now
