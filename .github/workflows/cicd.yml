@@ -38,6 +38,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: pointing-poker
+        path: ./
 
     - name: Deploy Binary
       uses: appleboy/scp-action@v0.1.7
