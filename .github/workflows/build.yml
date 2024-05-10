@@ -23,3 +23,11 @@ jobs:
     # No tests as of now
     # - name: Test
     #   run: go test -v ./...
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: pointing-poker
+        path: |
+          pointing-poker
+          deployments/pointing-poker.service
