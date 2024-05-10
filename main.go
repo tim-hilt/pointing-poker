@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -53,23 +54,29 @@ type Data struct {
 	Recommendation int
 }
 
-var templates = template.Must(template.ParseGlob("templates/*.html"))
-var templateIndex = template.Must(template.ParseFiles("templates/base.html", "templates/index.html", "templates/blocks.html"))
-var templateJoinSession = template.Must(template.ParseFiles("templates/base.html", "templates/join-session.html"))
-var templateNotFound = template.Must(template.ParseFiles("templates/base.html", "templates/not-found.html", "templates/blocks.html"))
-var templateSession = template.Must(template.ParseFiles("templates/base.html", "templates/session.html", "templates/blocks.html"))
+//go:embed web/template/*.html
+var templatesFS embed.FS
+
+var templates = template.Must(template.ParseFS(templatesFS, "web/template/*.html"))
+var templateIndex = template.Must(template.ParseFS(templatesFS, "web/template/base.html", "web/template/index.html", "web/template/blocks.html"))
+var templateJoinSession = template.Must(template.ParseFS(templatesFS, "web/template/base.html", "web/template/join-session.html"))
+var templateNotFound = template.Must(template.ParseFS(templatesFS, "web/template/base.html", "web/template/not-found.html", "web/template/blocks.html"))
+var templateSession = template.Must(template.ParseFS(templatesFS, "web/template/base.html", "web/template/session.html", "web/template/blocks.html"))
 
 var lockSessions sync.RWMutex
 var sessions = make(map[string]*Session)
 
-// TODO: Log info about requester (ip, ...)
-// TODO: Current solution with fixed element for voting-candidates is not good
-// TODO: Safari isn't saving cookies
-// TODO: username collisions
-// TODO: Embed templates and scripts in FS
+// TODO: Write test cmd that spawns websocket clients
 // TODO: Use session.Id when logging
+// TODO: CD with GitHub Actions
+// TODO: Current solution with fixed element for voting-candidates is not good -> Maybe sticky footer?
+// TODO: Log info about requester (ip, ...)
 // TODO: Instrumentation with Prometheus?
 // TODO: Animation if user voted
+// TODO: username collisions
+// TODO: Safari isn't saving cookies
+// TODO: Styling: Dark Mode / Light Mode
+// TODO: Styling: Responsive Design
 
 func newUserNameCookie(userName string) *http.Cookie {
 	return &http.Cookie{
@@ -438,6 +445,9 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//go:embed third_party/*
+var scripts embed.FS
+
 func main() {
 	http.HandleFunc("GET /", index)
 	http.HandleFunc("GET /favicon.ico", getFavicon)
@@ -446,7 +456,7 @@ func main() {
 	http.HandleFunc("POST /join-session/{id}", joinSession)
 	http.HandleFunc("GET /ws/{id}", handleWsConnection)
 
-	http.Handle("GET /scripts/", http.StripPrefix("/scripts/", http.FileServer(http.Dir("./vendored"))))
+	http.Handle("GET /scripts/", http.StripPrefix("/scripts/", http.FileServerFS(scripts)))
 
 	certDir := "/etc/letsencrypt/live/pointing-poker.duckdns.org"
 	cert := path.Join(certDir, "fullchain.pem")
