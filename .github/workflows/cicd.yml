@@ -32,13 +32,13 @@ jobs:
           pointing-poker
           deployments/pointing-poker.service
   deploy:
+    needs: build
     runs-on: ubuntu-latest
     steps:
     - name: Download Artifact
       uses: actions/download-artifact@v4
       with:
         name: pointing-poker
-        path: ./
 
     - name: Deploy Binary
       uses: appleboy/scp-action@v0.1.7
