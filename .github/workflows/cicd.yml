@@ -40,6 +40,15 @@ jobs:
     #   with:
     #     name: pointing-poker
 
+    # TODO: The below binaries only run on x86_64 machines
+    #  because there are no AMD64 runners on GitHub Actions.
+    #  Deploying an IPv6 machine doesn't seem to make sense,
+    #  because not even Certbot is installable on IPv6-only.
+    #  Thus, I have to ask myself if I want to have a more
+    #  expensive x86_64 + IPv4 machine for deploying the app,
+    #  stick to the current workflow with go run . or even set
+    #  up a self-hosted AMD64 runner.
+
     # - name: Deploy Binary
     #   uses: appleboy/scp-action@v0.1.7
     #   with:

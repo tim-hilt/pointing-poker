@@ -68,7 +68,6 @@ var sessions = make(map[string]*Session)
 
 // TODO: Write test cmd that spawns websocket clients
 // TODO: Use session.Id when logging
-// TODO: CD with GitHub Actions
 // TODO: Current solution with fixed element for voting-candidates is not good -> Maybe sticky footer?
 // TODO: Log info about requester (ip, ...)
 // TODO: Instrumentation with Prometheus?

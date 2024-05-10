@@ -171,10 +171,9 @@ func (s *Session) handleUserVoted(msg Data) {
 			Median:         median,
 			Recommendation: recommendation,
 		}
+		logger.Info("all users voted", "sessionName", s.Name, "average", average, "median", median, "recommendation", recommendation)
 
 		go s.executeAllUsers(func(user *User) {
-			logger.Info("all users voted", "sessionName", s.Name, "average", average, "median", median, "recommendation", recommendation)
-
 			var buf bytes.Buffer
 
 			data := d
