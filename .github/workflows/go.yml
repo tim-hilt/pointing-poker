@@ -27,3 +27,13 @@ jobs:
     # No tests as of now
     # - name: Test
     #   run: go test -v ./...
+
+    - name: Deploy Binary
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        key: ${{ secrets.KEY }}
+        port: ${{ secrets.PORT }}
+        source: pointing-poker
+        target: /root/

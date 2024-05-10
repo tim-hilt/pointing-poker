@@ -1,0 +1,14 @@
+[Unit]
+Description=Pointing Poker Service
+After=network.target
+
+[Service]
+ExecStart=pointing-poker
+Restart=always
+User=root
+WorkingDirectory=/root/
+StandardOutput=file:/var/log/pointing-poker.log
+StandardError=file:/var/log/pointing-poker-error.log
+
+[Install]
+WantedBy=default.target

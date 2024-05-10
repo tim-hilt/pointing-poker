@@ -57,7 +57,7 @@ type Data struct {
 //go:embed web/template/*.html
 var templatesFS embed.FS
 
-var templates = template.Must(template.ParseFS(templatesFS, "web/template/*.html"))
+var templates = template.Must(template.ParseFS(templatesFS, "web/template/blocks.html"))
 var templateIndex = template.Must(template.ParseFS(templatesFS, "web/template/base.html", "web/template/index.html", "web/template/blocks.html"))
 var templateJoinSession = template.Must(template.ParseFS(templatesFS, "web/template/base.html", "web/template/join-session.html"))
 var templateNotFound = template.Must(template.ParseFS(templatesFS, "web/template/base.html", "web/template/not-found.html", "web/template/blocks.html"))
