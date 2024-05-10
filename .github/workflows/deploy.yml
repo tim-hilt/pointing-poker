@@ -1,33 +1,16 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
-name: Go
+name: Deploy
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
+  workflow_run:
+    workflows: ["Go Build"]
+    types:
+      - completed
+    
 jobs:
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.22'
-
-    - name: Build
-      run: go build -v -ldflags="-s -w"
-
-    # No tests as of now
-    # - name: Test
-    #   run: go test -v ./...
-
+  deploy:
+  runs-on: ubuntu-lates
+  if: github.event.workflow_run.conclusion == 'success'
+  steps:
     - name: Deploy Binary
       uses: appleboy/scp-action@v0.1.7
       with:
