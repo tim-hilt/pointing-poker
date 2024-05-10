@@ -39,6 +39,7 @@ jobs:
         target: /root/
 
     - name: Deploy Service File
+      uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USER }}
