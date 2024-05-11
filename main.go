@@ -70,7 +70,6 @@ var sessions = make(map[string]*Session)
 // TODO: Instrumentation with Prometheus?
 // TODO: Current solution with fixed element for voting-candidates is not good -> Maybe sticky footer?
 // TODO: Write test cmd that spawns websocket clients
-// TODO: Use session.Id when logging
 // TODO: username collisions
 // TODO: Safari isn't saving cookies
 // TODO: Styling: Dark Mode / Light Mode
@@ -116,6 +115,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 	err = templateIndex.Execute(w, Data{
 		MyUser: user,
 	})
+
 	if err != nil {
 		logger.Error("could not execute template", "template", "index", "error", err)
 	}
@@ -196,15 +196,11 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 		logger.Error("could not execute template", "template", "session", "session", sessionId, "error", err)
 	}
 
-	_, err = w.Write([]byte("<title>Pointing Poker | " + session.Name + "</title>"))
-
-	if err != nil {
+	if _, err = w.Write([]byte("<title>Pointing Poker | " + session.Name + "</title>")); err != nil {
 		logger.Error("could not write to response", "session", sessionId, "error", err)
 	}
 
-	_, err = w.Write([]byte("<title>Pointing Poker | " + session.Name + "</title>"))
-
-	if err != nil {
+	if _, err = w.Write([]byte("<title>Pointing Poker | " + session.Name + "</title>")); err != nil {
 		logger.Error("could not write to response", "session", sessionId, "error", err)
 	}
 }
@@ -294,8 +290,7 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseForm()
-	if err != nil {
+	if err := r.ParseForm(); err != nil {
 		logger.Info("could not parse form", "route", "POST /create-session")
 		return
 	}
@@ -308,17 +303,19 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookieUserName)
 
 	session := sessions[sessionId]
-	err = templates.ExecuteTemplate(w, "session", Data{
+	err := templates.ExecuteTemplate(w, "session", Data{
 		Scale:       session.scale,
 		OtherUsers:  session.getOtherUsers(userName),
 		MyUser:      &User{Name: userName, Vote: -1},
 		SessionId:   sessionId,
 		SessionName: session.Name,
 	})
-	w.Write([]byte("<title>Pointing Poker | " + session.Name + "</title>"))
-
 	if err != nil {
 		logger.Error("could not execute template", "template", "session", "session", sessionId, "error", err)
+	}
+
+	if _, err = w.Write([]byte("<title>Pointing Poker | " + session.Name + "</title>")); err != nil {
+		logger.Error("could not write title", "session", sessionId, "error", err)
 	}
 }
 
@@ -408,8 +405,8 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 		logger.Info("message from websocket", "user", user.Name, "message", string(d))
 
 		wsResponse := &HtmxWsResponse{}
-		err = json.Unmarshal(d, wsResponse)
-		if err != nil {
+
+		if err = json.Unmarshal(d, wsResponse); err != nil {
 			logger.Error("could not unmarshal json", "error", err)
 			continue
 		}
@@ -436,9 +433,7 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 		session.broadcast <- data
 	}
 
-	err = c.Close(websocket.StatusNormalClosure, "Connection closed")
-
-	if err != nil {
+	if err = c.Close(websocket.StatusNormalClosure, "Connection closed"); err != nil {
 		logger.Error("could not close websocket connection", "user", user.Name, "session", sessionId)
 	}
 }
@@ -465,14 +460,13 @@ func main() {
 	if _, err := os.Stat(certDir); err == nil {
 		// certificate found
 		go http.ListenAndServeTLS("0.0.0.0:443", cert, key, nil)
-		err := http.ListenAndServe("0.0.0.0:80", nil)
-		if err != nil {
+
+		if err = http.ListenAndServe("0.0.0.0:80", nil); err != nil {
 			logger.Error("server exited unexpectedly", "error", err)
 		}
 
 	} else if errors.Is(err, os.ErrNotExist) {
-		err := http.ListenAndServe(":8000", nil)
-		if err != nil {
+		if err = http.ListenAndServe(":8000", nil); err != nil {
 			logger.Error("server exited unexpectedly", "error", err)
 		}
 	} else {
