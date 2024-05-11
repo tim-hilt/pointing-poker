@@ -193,19 +193,19 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		logger.Error("could not execute template", "template", "session", "sessionName", sessionName, "error", err)
+		logger.Error("could not execute template", "template", "session", "session", sessionId, "error", err)
 	}
 
 	_, err = w.Write([]byte("<title>Pointing Poker | " + session.Name + "</title>"))
 
 	if err != nil {
-		logger.Error("could not write to response", "session", sessionName, "error", err)
+		logger.Error("could not write to response", "session", sessionId, "error", err)
 	}
 
 	_, err = w.Write([]byte("<title>Pointing Poker | " + session.Name + "</title>"))
 
 	if err != nil {
-		logger.Error("could not write to response", "session", sessionName, "error", err)
+		logger.Error("could not write to response", "session", sessionId, "error", err)
 	}
 }
 
@@ -235,7 +235,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, ok := sessions[sessionId]; !ok {
-		logger.Warn("session does not exist", "sessionId", sessionId)
+		logger.Warn("session does not exist", "session", sessionId)
 		w.WriteHeader(http.StatusNotFound)
 
 		err := templateNotFound.Execute(w, Data{
@@ -243,7 +243,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 			MyUser:    user,
 		})
 		if err != nil {
-			logger.Error("could not execute template", "template", "not-found", "route", route, "error", err, "sessionId", sessionId)
+			logger.Error("could not execute template", "template", "not-found", "route", route, "error", err, "session", sessionId)
 		}
 		return
 	}
@@ -258,7 +258,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 			Scale:       session.scale,
 		})
 		if err != nil {
-			logger.Error("could not execute template", "template", "session", "sessionName", session.Name, "error", err)
+			logger.Error("could not execute template", "template", "session", "session", sessionId, "error", err)
 		}
 		return
 	}
@@ -270,7 +270,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		logger.Error("could not execute template", "template", "join-session", "sessionName", sessionName, "error", err)
+		logger.Error("could not execute template", "template", "join-session", "session", sessionId, "error", err)
 	}
 }
 
@@ -288,7 +288,7 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 		})
 
 		if err != nil {
-			logger.Error("could not execute template", "template", "not-found", "route", route, "error", err, "sessionId", sessionId)
+			logger.Error("could not execute template", "template", "not-found", "route", route, "error", err, "session", sessionId)
 		}
 
 		return
@@ -318,7 +318,7 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("<title>Pointing Poker | " + session.Name + "</title>"))
 
 	if err != nil {
-		logger.Error("could not execute template", "template", "session", "sessionName", session.Name, "error", err)
+		logger.Error("could not execute template", "template", "session", "session", sessionId, "error", err)
 	}
 }
 
@@ -354,21 +354,21 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 	logger.Info("incoming request", "route", route)
 
 	if _, ok := sessions[sessionId]; !ok {
-		logger.Warn("session does not exist", "sessionId", sessionId)
+		logger.Warn("session does not exist", "session", sessionId)
 		w.WriteHeader(http.StatusNotFound)
 
 		err := templateNotFound.Execute(w, Data{
 			SessionId: sessionId,
 		})
 		if err != nil {
-			logger.Error("could not execute template", "template", "not-found", "route", route, "error", err, "sessionId", sessionId)
+			logger.Error("could not execute template", "template", "not-found", "route", route, "error", err, "session", sessionId)
 		}
 		return
 	}
 
 	c, err := websocket.Accept(w, r, nil)
 	if err != nil {
-		logger.Error("session could not be joined", "user", user.Name, "sessionId", sessionId, "error", err)
+		logger.Error("session could not be joined", "user", user.Name, "session", sessionId, "error", err)
 		return
 	}
 
@@ -397,7 +397,7 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if websocket.CloseStatus(err) == websocket.StatusNoStatusRcvd {
-			logger.Info("websocket connection closed, possibly by timeout?", "session", session.Id, "user", user.Name)
+			logger.Info("websocket connection closed, possibly by timeout?", "session", sessionId, "user", user.Name)
 			break
 		}
 
@@ -439,7 +439,7 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 	err = c.Close(websocket.StatusNormalClosure, "Connection closed")
 
 	if err != nil {
-		logger.Error("could not close websocket connection", "user", user.Name, "sessionId", sessionId)
+		logger.Error("could not close websocket connection", "user", user.Name, "session", sessionId)
 	}
 }
 
