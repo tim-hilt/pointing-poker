@@ -18,58 +18,49 @@ jobs:
         go-version: '1.22'
 
     - name: Go Build
-      run: go build -v -ldflags="-s -w"
+      run: GOARCH=arm64 go build -v -ldflags="-s -w"
 
     # No tests as of now
     # - name: Test
     #   run: go test -v ./...
 
-    # - name: Upload Artifact
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: pointing-poker
-    #     path: |
-    #       pointing-poker
-    #       deployments/pointing-poker.service
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: pointing-poker
+        path: |
+          pointing-poker
+          deployments/pointing-poker.service
   deploy:
     needs: build
     runs-on: ubuntu-latest
     steps:
-    # - name: Download Artifact
-    #   uses: actions/download-artifact@v4
-    #   with:
-    #     name: pointing-poker
+    - name: Download Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: pointing-poker
 
-    # TODO: The below binaries only run on x86_64 machines
-    #  because there are no AMD64 runners on GitHub Actions.
-    #  Deploying an IPv6 machine doesn't seem to make sense,
-    #  because not even Certbot is installable on IPv6-only.
-    #  Thus, I have to ask myself if I want to have a more
-    #  expensive x86_64 + IPv4 machine for deploying the app,
-    #  stick to the current workflow with go run . or even set
-    #  up a self-hosted AMD64 runner.
+    - name: Deploy Binary
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        key: ${{ secrets.KEY }}
+        port: ${{ secrets.PORT }}
+        source: pointing-poker
+        target: /root/
+        overwrite: true
 
-    # - name: Deploy Binary
-    #   uses: appleboy/scp-action@v0.1.7
-    #   with:
-    #     host: ${{ secrets.HOST }}
-    #     username: ${{ secrets.USER }}
-    #     key: ${{ secrets.KEY }}
-    #     port: ${{ secrets.PORT }}
-    #     source: pointing-poker
-    #     target: /root/
-    #     overwrite: true
-
-    # - name: Deploy Service File
-    #   uses: appleboy/scp-action@v0.1.7
-    #   with:
-    #     host: ${{ secrets.HOST }}
-    #     username: ${{ secrets.USER }}
-    #     key: ${{ secrets.KEY }}
-    #     port: ${{ secrets.PORT }}
-    #     source: deployments/pointing-poker.service
-    #     target: /etc/systemd/system/
-    #     overwrite: true
+    - name: Deploy Service File
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        key: ${{ secrets.KEY }}
+        port: ${{ secrets.PORT }}
+        source: deployments/pointing-poker.service
+        target: /etc/systemd/system/
+        overwrite: true
 
     - name: Restart pointing-poker Service
       uses: appleboy/ssh-action@v1.0.3
@@ -78,4 +69,4 @@ jobs:
         username: ${{ secrets.USER }}
         key: ${{ secrets.KEY }}
         port: ${{ secrets.PORT }}
-        script: cd /root/pointing-poker-websockets && git pull && systemctl restart pointing-poker
+        script: systemctl restart pointing-poker

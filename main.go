@@ -66,12 +66,11 @@ var templateSession = template.Must(template.ParseFS(templatesFS, "web/template/
 var lockSessions sync.RWMutex
 var sessions = make(map[string]*Session)
 
-// TODO: Write test cmd that spawns websocket clients
-// TODO: Use session.Id when logging
-// TODO: Current solution with fixed element for voting-candidates is not good -> Maybe sticky footer?
 // TODO: Log info about requester (ip, ...)
 // TODO: Instrumentation with Prometheus?
-// TODO: Animation if user voted
+// TODO: Current solution with fixed element for voting-candidates is not good -> Maybe sticky footer?
+// TODO: Write test cmd that spawns websocket clients
+// TODO: Use session.Id when logging
 // TODO: username collisions
 // TODO: Safari isn't saving cookies
 // TODO: Styling: Dark Mode / Light Mode
