@@ -61,6 +61,7 @@ jobs:
         source: deployments/pointing-poker.service
         target: /etc/systemd/system/
         overwrite: true
+        strip_components: 1
 
     - name: Restart pointing-poker Service
       uses: appleboy/ssh-action@v1.0.3
@@ -69,4 +70,4 @@ jobs:
         username: ${{ secrets.USER }}
         key: ${{ secrets.KEY }}
         port: ${{ secrets.PORT }}
-        script: systemctl restart pointing-poker
+        script: chmod +x /root/pointing-poker && systemctl restart pointing-poker
