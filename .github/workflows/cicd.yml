@@ -70,4 +70,4 @@ jobs:
         username: ${{ secrets.USER }}
         key: ${{ secrets.KEY }}
         port: ${{ secrets.PORT }}
-        script: chmod +x /root/pointing-poker && systemctl restart pointing-poker
+        script: chmod +x /root/pointing-poker && systemctl daemon-reload && systemctl restart pointing-poker
