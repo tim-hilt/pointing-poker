@@ -399,7 +399,8 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err != nil {
-			logger.Error("unknown error", "error", err)
+			logger.Error("unknown error. Closing connection", "error", err, "session", sessionId, "user", user.Name)
+			break
 		}
 
 		logger.Info("message from websocket", "user", user.Name, "message", string(d))
