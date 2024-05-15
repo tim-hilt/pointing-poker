@@ -63,17 +63,17 @@ jobs:
         overwrite: true
         strip_components: 1
 
-    - name: Deploy Service Logging Config
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USER }}
-        key: ${{ secrets.KEY }}
-        port: ${{ secrets.PORT }}
-        source: deployments/pointing-poker.conf
-        target: /etc/systemd/journald.conf.d/
-        overwrite: true
-        strip_components: 1
+    # - name: Deploy Service Logging Config
+    #   uses: appleboy/scp-action@v0.1.7
+    #   with:
+    #     host: ${{ secrets.HOST }}
+    #     username: ${{ secrets.USER }}
+    #     key: ${{ secrets.KEY }}
+    #     port: ${{ secrets.PORT }}
+    #     source: deployments/pointing-poker.conf
+    #     target: /etc/systemd/journald.conf.d/
+    #     overwrite: true
+    #     strip_components: 1
 
     - name: Restart pointing-poker Service
       uses: appleboy/ssh-action@v1.0.3
@@ -82,4 +82,5 @@ jobs:
         username: ${{ secrets.USER }}
         key: ${{ secrets.KEY }}
         port: ${{ secrets.PORT }}
-        script: chmod +x /root/pointing-poker && systemctl daemon-reload && systemctl restart systemd-journald && systemctl restart pointing-poker
+        # script: chmod +x /root/pointing-poker && systemctl daemon-reload && systemctl restart systemd-journald && systemctl restart pointing-poker
+        script: chmod +x /usr/local/bin/pointing-poker && systemctl daemon-reload && systemctl restart pointing-poker
