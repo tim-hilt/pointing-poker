@@ -48,7 +48,7 @@ jobs:
         key: ${{ secrets.KEY }}
         port: ${{ secrets.PORT }}
         source: pointing-poker
-        target: /root/
+        target: /usr/local/bin
         overwrite: true
 
     - name: Deploy Service File

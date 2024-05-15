@@ -5,8 +5,8 @@ After=network.target
 [Service]
 ExecStart=pointing-poker
 Restart=always
+RestartSec=10
 User=root
-WorkingDirectory=/root/
 
 [Install]
 WantedBy=default.target
