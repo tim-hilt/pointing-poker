@@ -40,6 +40,15 @@ jobs:
       with:
         name: pointing-poker
 
+    - name: Stop pointing-poker Service
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        key: ${{ secrets.KEY }}
+        port: ${{ secrets.PORT }}
+        script: systemctl stop pointing-poker
+
     - name: Deploy Binary
       uses: appleboy/scp-action@v0.1.7
       with:
