@@ -63,6 +63,7 @@ jobs:
         overwrite: true
         strip_components: 1
 
+    # TODO: Make this run
     # - name: Deploy Service Logging Config
     #   uses: appleboy/scp-action@v0.1.7
     #   with:
@@ -83,4 +84,7 @@ jobs:
         key: ${{ secrets.KEY }}
         port: ${{ secrets.PORT }}
         # script: chmod +x /root/pointing-poker && systemctl daemon-reload && systemctl restart systemd-journald && systemctl restart pointing-poker
-        script: chmod +x /usr/local/bin/pointing-poker && systemctl daemon-reload && systemctl restart pointing-poker
+        script: >
+          chmod +x /usr/local/bin/pointing-poker &&
+          systemctl daemon-reload &&
+          systemctl restart pointing-poker

@@ -451,7 +451,7 @@ func main() {
 
 	http.Handle("GET /scripts/", http.StripPrefix("/scripts/", http.FileServerFS(scripts)))
 
-	certDir := "/etc/letsencrypt/live/tim-hilt.duckdns.org"
+	certDir := "/etc/letsencrypt/live/pointing-poker.duckdns.org"
 	cert := path.Join(certDir, "fullchain.pem")
 	key := path.Join(certDir, "privkey.pem")
 
