@@ -138,8 +138,8 @@ func (s *Session) handleUserLeft(msg Data) {
 
 	go s.executeAllUsers(func(user *User) {
 		data := d
-		d.MyUser = user
-		d.OtherUsers = s.getOtherUsers(user.Name)
+		data.MyUser = user
+		data.OtherUsers = s.getOtherUsers(user.Name)
 
 		var buf bytes.Buffer
 		err := templates.ExecuteTemplate(&buf, "users", data)
@@ -192,6 +192,7 @@ func (s *Session) handleUserVoted(msg Data) {
 	go func() {
 		var buf bytes.Buffer
 		err := templates.ExecuteTemplate(&buf, "users", Data{
+			// TODO: Do we have a nil pointer here?
 			MyUser:     msg.MyUser,
 			OtherUsers: s.getOtherUsers(msg.MyUser.Name),
 		})
