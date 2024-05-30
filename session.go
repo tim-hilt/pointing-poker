@@ -93,12 +93,12 @@ func (s *Session) handleEvent(msg Data) {
 	case DEFAULT:
 		fallthrough
 	default:
-		logger.Error("should never reach here")
+		// logger.Error("should never reach here")
 	}
 }
 
 func (s *Session) handleTimeout() {
-	logger.Info("deleting session after one hour of inactivity", "session", s.Id)
+	// logger.Info("deleting session after one hour of inactivity", "session", s.Id)
 	s.executeAllUsers(func(user *User) {
 		var buf bytes.Buffer
 		err := templates.ExecuteTemplate(&buf, "timeout", Data{
@@ -106,11 +106,11 @@ func (s *Session) handleTimeout() {
 		})
 
 		if err != nil {
-			logger.Error("could not execute template", "template", "timeout", "session", s.Id, "user", user.Name, "error", err)
+			// logger.Error("could not execute template", "template", "timeout", "session", s.Id, "user", user.Name, "error", err)
 		}
 
 		if err = user.Connection.Write(context.Background(), websocket.MessageText, buf.Bytes()); err != nil {
-			logger.Error("could not write message to user", "message", buf.String(), "session", s.Id, "user", user.Name, "error", err)
+			// logger.Error("could not write message to user", "message", buf.String(), "session", s.Id, "user", user.Name, "error", err)
 		}
 	})
 	delete(sessions, s.Id)
@@ -118,7 +118,7 @@ func (s *Session) handleTimeout() {
 }
 
 func (s *Session) handleUserJoined(msg Data) {
-	logger.Info("user joined session", "publisher", msg.MyUser.Name, "session", s.Id)
+	// logger.Info("user joined session", "publisher", msg.MyUser.Name, "session", s.Id)
 	activeUsers.Inc()
 
 	go s.executeSubscribers(msg.MyUser.Name, func(user *User) {
@@ -129,17 +129,17 @@ func (s *Session) handleUserJoined(msg Data) {
 		})
 
 		if err != nil {
-			logger.Error("could not execute template", "template", "users", "session", s.Id, "user", user.Name, "error", err)
+			// logger.Error("could not execute template", "template", "users", "session", s.Id, "user", user.Name, "error", err)
 		}
 
 		if err = user.Connection.Write(context.Background(), websocket.MessageText, buf.Bytes()); err != nil {
-			logger.Error("could not write message to user", "message", buf.String(), "session", s.Id, "user", user.Name, "error", err)
+			// logger.Error("could not write message to user", "message", buf.String(), "session", s.Id, "user", user.Name, "error", err)
 		}
 	})
 }
 
 func (s *Session) handleUserLeft(msg Data) {
-	logger.Info("user left session", "user", msg.MyUser.Name, "session", s.Id)
+	// logger.Info("user left session", "user", msg.MyUser.Name, "session", s.Id)
 	activeUsers.Dec()
 
 	d := Data{}
@@ -163,17 +163,17 @@ func (s *Session) handleUserLeft(msg Data) {
 		var buf bytes.Buffer
 		err := templates.ExecuteTemplate(&buf, "users", data)
 		if err != nil {
-			logger.Error("could not execute template", "template", "users", "session", s.Id, "user", user.Name, "error", err)
+			// logger.Error("could not execute template", "template", "users", "session", s.Id, "user", user.Name, "error", err)
 		}
 
 		if err = user.Connection.Write(context.Background(), websocket.MessageText, buf.Bytes()); err != nil {
-			logger.Error("could not write message to user", "message", buf.String(), "session", s.Id, "user", user.Name, "error", err)
+			// logger.Error("could not write message to user", "message", buf.String(), "session", s.Id, "user", user.Name, "error", err)
 		}
 	})
 }
 
 func (s *Session) handleUserVoted(msg Data) {
-	logger.Info("new vote", "user", msg.MyUser.Name, "session", s.Id, "vote", msg.Vote)
+	// logger.Info("new vote", "user", msg.MyUser.Name, "session", s.Id, "vote", msg.Vote)
 
 	if s.allUsersVoted() {
 		totalEstimations.Inc()
@@ -189,7 +189,7 @@ func (s *Session) handleUserVoted(msg Data) {
 			Median:         median,
 			Recommendation: recommendation,
 		}
-		logger.Info("all users voted", "session", s.Id, "average", average, "median", median, "recommendation", recommendation)
+		// logger.Info("all users voted", "session", s.Id, "average", average, "median", median, "recommendation", recommendation)
 
 		go s.executeAllUsers(func(user *User) {
 			var buf bytes.Buffer
@@ -200,11 +200,11 @@ func (s *Session) handleUserVoted(msg Data) {
 
 			err := templates.ExecuteTemplate(&buf, "users", data)
 			if err != nil {
-				logger.Error("could not execute template", "template", "users", "session", s.Id, "user", user.Name, "error", err)
+				// logger.Error("could not execute template", "template", "users", "session", s.Id, "user", user.Name, "error", err)
 			}
 
 			if err = user.Connection.Write(context.Background(), websocket.MessageText, buf.Bytes()); err != nil {
-				logger.Error("could not write message to user", "message", buf.String(), "session", s.Id, "user", user.Name, "error", err)
+				// logger.Error("could not write message to user", "message", buf.String(), "session", s.Id, "user", user.Name, "error", err)
 			}
 		})
 		return
@@ -218,11 +218,11 @@ func (s *Session) handleUserVoted(msg Data) {
 			OtherUsers: s.getOtherUsers(msg.MyUser.Name),
 		})
 		if err != nil {
-			logger.Error("could not execute template", "template", "users", "session", s.Id, "user", msg.MyUser.Name, "error", err)
+			// logger.Error("could not execute template", "template", "users", "session", s.Id, "user", msg.MyUser.Name, "error", err)
 		}
 
 		if err = msg.MyUser.Connection.Write(context.Background(), websocket.MessageText, buf.Bytes()); err != nil {
-			logger.Error("could not write message to user", "message", buf.String(), "session", s.Id, "user", msg.MyUser.Name, "error", err)
+			// logger.Error("could not write message to user", "message", buf.String(), "session", s.Id, "user", msg.MyUser.Name, "error", err)
 		}
 	}()
 
@@ -233,17 +233,17 @@ func (s *Session) handleUserVoted(msg Data) {
 			OtherUsers: s.getOtherUsers(user.Name),
 		})
 		if err != nil {
-			logger.Error("could not execute template", "template", "users", "session", s.Id, "user", user.Name, "error", err)
+			// logger.Error("could not execute template", "template", "users", "session", s.Id, "user", user.Name, "error", err)
 		}
 
 		if err = user.Connection.Write(context.Background(), websocket.MessageText, buf.Bytes()); err != nil {
-			logger.Error("could not write message to user", "message", buf.String(), "session", s.Id, "user", user.Name, "error", err)
+			// logger.Error("could not write message to user", "message", buf.String(), "session", s.Id, "user", user.Name, "error", err)
 		}
 	})
 }
 
 func (s *Session) handleReset(msg Data) {
-	logger.Info("restarting session", "session", s.Id, "user", msg.MyUser.Name)
+	// logger.Info("restarting session", "session", s.Id, "user", msg.MyUser.Name)
 	for _, user := range s.Users {
 		user.Vote = -1
 	}
@@ -258,11 +258,11 @@ func (s *Session) handleReset(msg Data) {
 			SessionName: s.Name,
 		})
 		if err != nil {
-			logger.Error("could not execute template", "template", "users", "session", s.Id, "user", user.Name, "error", err)
+			// logger.Error("could not execute template", "template", "users", "session", s.Id, "user", user.Name, "error", err)
 		}
 
 		if err = user.Connection.Write(context.Background(), websocket.MessageText, buf.Bytes()); err != nil {
-			logger.Error("could not write message to user", "message", buf.String(), "session", s.Id, "user", user.Name, "error", err)
+			// logger.Error("could not write message to user", "message", buf.String(), "session", s.Id, "user", user.Name, "error", err)
 		}
 	})
 }

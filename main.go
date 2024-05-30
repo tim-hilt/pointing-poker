@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -114,16 +113,16 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if errors.Is(err, http.ErrNoCookie) {
-		logger.Info("new user wants to create session")
+		// logger.Info("new user wants to create session")
 	} else if err != nil {
-		logger.Error("unexpected error while checking cookie", "error", err)
+		// logger.Error("unexpected error while checking cookie", "error", err)
 		return
 	} else {
 		un, err := base64.URLEncoding.DecodeString(cookieUserName.Value)
 		if err != nil {
-			logger.Error("unexpected error while decoding cookie value")
+			// logger.Error("unexpected error while decoding cookie value")
 		}
-		logger.Info("known user wants to create session", "userName", string(un))
+		// logger.Info("known user wants to create session", "userName", string(un))
 		user.Name = string(un)
 	}
 
@@ -132,7 +131,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		logger.Error("could not execute template", "template", "index", "error", err)
+		// logger.Error("could not execute template", "template", "index", "error", err)
 	}
 }
 
@@ -155,7 +154,7 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseForm()
 	if err != nil {
-		logger.Info("could not parse form", "route", route)
+		// logger.Info("could not parse form", "route", route)
 		return
 	}
 
@@ -177,13 +176,13 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 		cookieUserName = newUserNameCookie(userName)
 		http.SetCookie(w, cookieUserName)
 	} else if err != nil {
-		logger.Error("unexpected error while checking cookie", "error", err)
+		// logger.Error("unexpected error while checking cookie", "error", err)
 	} else {
 		un, err := base64.URLEncoding.DecodeString(cookieUserName.Value)
 		if err != nil {
-			logger.Error("unexpected error while decoding cookie value")
+			// logger.Error("unexpected error while decoding cookie value")
 		}
-		logger.Info("known user wants to create session", "userName", string(un))
+		// logger.Info("known user wants to create session", "userName", string(un))
 		user.Name = string(un)
 	}
 
@@ -214,15 +213,15 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		logger.Error("could not execute template", "template", "session", "session", sessionId, "error", err)
+		// logger.Error("could not execute template", "template", "session", "session", sessionId, "error", err)
 	}
 
 	if _, err = w.Write([]byte("<title>Pointing Poker | " + session.Name + "</title>")); err != nil {
-		logger.Error("could not write to response", "session", sessionId, "error", err)
+		// logger.Error("could not write to response", "session", sessionId, "error", err)
 	}
 
 	if _, err = w.Write([]byte("<title>Pointing Poker | " + session.Name + "</title>")); err != nil {
-		logger.Error("could not write to response", "session", sessionId, "error", err)
+		// logger.Error("could not write to response", "session", sessionId, "error", err)
 	}
 }
 
@@ -233,7 +232,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sessionId := r.PathValue("id")
-	route := fmt.Sprintf("GET /%s", sessionId)
+	// route := fmt.Sprintf("GET /%s", sessionId)
 	httpReqs.WithLabelValues("GET /{sessionId}").Inc()
 
 	cookieUserName, err := r.Cookie("username")
@@ -244,20 +243,20 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if errors.Is(err, http.ErrNoCookie) {
-		logger.Info("new user wants to join session")
+		// logger.Info("new user wants to join session")
 	} else if err != nil {
-		logger.Error("unexpected error while checking cookie", "error", err)
+		// logger.Error("unexpected error while checking cookie", "error", err)
 	} else {
 		un, err := base64.URLEncoding.DecodeString(cookieUserName.Value)
 		if err != nil {
-			logger.Error("unexpected error while decoding cookie value")
+			// logger.Error("unexpected error while decoding cookie value")
 		}
-		logger.Info("known user wants to create session", "userName", string(un))
+		// logger.Info("known user wants to create session", "userName", string(un))
 		user.Name = string(un)
 	}
 
 	if _, ok := sessions[sessionId]; !ok {
-		logger.Warn("session does not exist", "session", sessionId)
+		// logger.Warn("session does not exist", "session", sessionId)
 		w.WriteHeader(http.StatusNotFound)
 
 		err := templateNotFound.Execute(w, Data{
@@ -265,7 +264,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 			MyUser:    user,
 		})
 		if err != nil {
-			logger.Error("could not execute template", "template", "not-found", "route", route, "error", err, "session", sessionId)
+			// logger.Error("could not execute template", "template", "not-found", "route", route, "error", err, "session", sessionId)
 		}
 		return
 	}
@@ -280,7 +279,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 			Scale:       session.scale,
 		})
 		if err != nil {
-			logger.Error("could not execute template", "template", "session", "session", sessionId, "error", err)
+			// logger.Error("could not execute template", "template", "session", "session", sessionId, "error", err)
 		}
 		return
 	}
@@ -292,7 +291,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		logger.Error("could not execute template", "template", "join-session", "session", sessionId, "error", err)
+		// logger.Error("could not execute template", "template", "join-session", "session", sessionId, "error", err)
 	}
 }
 
@@ -303,11 +302,11 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sessionId := r.PathValue("id")
-	route := fmt.Sprintf("POST /join-session/%s", sessionId)
+	// route := fmt.Sprintf("POST /join-session/%s", sessionId)
 	httpReqs.WithLabelValues("POST /join-session/{sessionId}").Inc()
 
 	if _, ok := sessions[sessionId]; !ok {
-		logger.Warn("session does not exist", "sessionId", sessionId)
+		// logger.Warn("session does not exist", "sessionId", sessionId)
 		w.WriteHeader(http.StatusNotFound)
 
 		err := templateNotFound.Execute(w, Data{
@@ -315,14 +314,14 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 		})
 
 		if err != nil {
-			logger.Error("could not execute template", "template", "not-found", "route", route, "error", err, "session", sessionId)
+			// logger.Error("could not execute template", "template", "not-found", "route", route, "error", err, "session", sessionId)
 		}
 
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		logger.Info("could not parse form", "route", "POST /create-session")
+		// logger.Info("could not parse form", "route", "POST /create-session")
 		return
 	}
 
@@ -342,11 +341,11 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 		SessionName: session.Name,
 	})
 	if err != nil {
-		logger.Error("could not execute template", "template", "session", "session", sessionId, "error", err)
+		// logger.Error("could not execute template", "template", "session", "session", sessionId, "error", err)
 	}
 
 	if _, err = w.Write([]byte("<title>Pointing Poker | " + session.Name + "</title>")); err != nil {
-		logger.Error("could not write title", "session", sessionId, "error", err)
+		// logger.Error("could not write title", "session", sessionId, "error", err)
 	}
 }
 
@@ -362,12 +361,12 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 	httpReqs.WithLabelValues("GET /ws/{sessionId}").Inc()
 
 	if errors.Is(err, http.ErrNoCookie) {
-		logger.Error("username-cookie not set. Could not join session")
+		// logger.Error("username-cookie not set. Could not join session")
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("username-cookie not set. Could not join session"))
 		return
 	} else if err != nil {
-		logger.Error("unexpected error while checking cookie", "error", err)
+		// logger.Error("unexpected error while checking cookie", "error", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Something went wrong."))
 		return
@@ -379,30 +378,30 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 	}
 	un, err := base64.URLEncoding.DecodeString(cookieUserName.Value)
 	if err != nil {
-		logger.Error("unexpected error while decoding cookie value")
+		// logger.Error("unexpected error while decoding cookie value")
 	}
-	logger.Info("known user wants to create session", "userName", string(un))
+	// logger.Info("known user wants to create session", "userName", string(un))
 	user.Name = string(un)
 
-	route := fmt.Sprintf("GET /ws/%s", sessionId)
-	logger.Info("incoming request", "route", route)
+	// route := fmt.Sprintf("GET /ws/%s", sessionId)
+	// logger.Info("incoming request", "route", route)
 
 	if _, ok := sessions[sessionId]; !ok {
-		logger.Warn("session does not exist", "session", sessionId)
+		// logger.Warn("session does not exist", "session", sessionId)
 		w.WriteHeader(http.StatusNotFound)
 
 		err := templateNotFound.Execute(w, Data{
 			SessionId: sessionId,
 		})
 		if err != nil {
-			logger.Error("could not execute template", "template", "not-found", "route", route, "error", err, "session", sessionId)
+			// logger.Error("could not execute template", "template", "not-found", "route", route, "error", err, "session", sessionId)
 		}
 		return
 	}
 
 	c, err := websocket.Accept(w, r, nil)
 	if err != nil {
-		logger.Error("session could not be joined", "user", user.Name, "session", sessionId, "error", err)
+		// logger.Error("session could not be joined", "user", user.Name, "session", sessionId, "error", err)
 		return
 	}
 
@@ -431,21 +430,21 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if websocket.CloseStatus(err) == websocket.StatusNoStatusRcvd {
-			logger.Info("websocket connection closed, possibly by timeout?", "session", sessionId, "user", user.Name)
+			// logger.Info("websocket connection closed, possibly by timeout?", "session", sessionId, "user", user.Name)
 			break
 		}
 
 		if err != nil {
-			logger.Error("unknown error. Closing connection", "error", err, "session", sessionId, "user", user.Name)
+			// logger.Error("unknown error. Closing connection", "error", err, "session", sessionId, "user", user.Name)
 			break
 		}
 
-		logger.Info("message from websocket", "user", user.Name, "message", string(d))
+		// logger.Info("message from websocket", "user", user.Name, "message", string(d))
 
 		wsResponse := &HtmxWsResponse{}
 
 		if err = json.Unmarshal(d, wsResponse); err != nil {
-			logger.Error("could not unmarshal json", "error", err)
+			// logger.Error("could not unmarshal json", "error", err)
 			continue
 		}
 
@@ -456,7 +455,7 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 		if wsResponse.Vote != "" {
 			vote, err := strconv.Atoi(wsResponse.Vote)
 			if err != nil {
-				logger.Error("couldn't parse vote to int", "vote", wsResponse.Vote, "error", err)
+				// logger.Error("couldn't parse vote to int", "vote", wsResponse.Vote, "error", err)
 			}
 
 			session.Lock()
@@ -472,7 +471,7 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = c.Close(websocket.StatusNormalClosure, "Connection closed"); err != nil {
-		logger.Error("could not close websocket connection", "user", user.Name, "session", sessionId)
+		// logger.Error("could not close websocket connection", "user", user.Name, "session", sessionId)
 	}
 }
 
@@ -507,22 +506,22 @@ func main() {
 	cert := path.Join(certDir, "fullchain.pem")
 	key := path.Join(certDir, "privkey.pem")
 
-	logger.Info("starting server")
+	// logger.Info("starting server")
 
 	if _, err := os.Stat(certDir); err == nil {
 		// certificate found
 		go http.ListenAndServeTLS("0.0.0.0:443", cert, key, nil)
 
 		if err = http.ListenAndServe("0.0.0.0:80", nil); err != nil {
-			logger.Error("server exited unexpectedly", "error", err)
+			// logger.Error("server exited unexpectedly", "error", err)
 		}
 
 	} else if errors.Is(err, os.ErrNotExist) {
 		if err = http.ListenAndServe(":8000", nil); err != nil {
-			logger.Error("server exited unexpectedly", "error", err)
+			// logger.Error("server exited unexpectedly", "error", err)
 		}
 	} else {
-		logger.Error("unexpected error", "error", err)
+		// logger.Error("unexpected error", "error", err)
 
 	}
 }
