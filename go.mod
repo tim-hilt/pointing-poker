@@ -1,6 +1,6 @@
 module github.com/tim-hilt/pointing-poker
 
-go 1.22
+go 1.22.3
 
 require nhooyr.io/websocket v1.8.11
 
