@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"nhooyr.io/websocket"
 )
 
@@ -51,6 +52,21 @@ func (s *Session) getVotes() []int {
 	}
 	return votes
 }
+
+var activeSessions = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "sessions_active",
+	Help: "How many sessions are currently active",
+})
+
+var activeUsers = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "users_active",
+	Help: "How many users are currently active",
+})
+
+var totalEstimations = prometheus.NewCounter(prometheus.CounterOpts{
+	Name: "estimations_total",
+	Help: "How many estimations have been processed",
+})
 
 func (s *Session) handleBroadcast() {
 	for {
@@ -98,10 +114,12 @@ func (s *Session) handleTimeout() {
 		}
 	})
 	delete(sessions, s.Id)
+	activeSessions.Dec()
 }
 
 func (s *Session) handleUserJoined(msg Data) {
 	logger.Info("user joined session", "publisher", msg.MyUser.Name, "session", s.Id)
+	activeUsers.Inc()
 
 	go s.executeSubscribers(msg.MyUser.Name, func(user *User) {
 		var buf bytes.Buffer
@@ -122,6 +140,7 @@ func (s *Session) handleUserJoined(msg Data) {
 
 func (s *Session) handleUserLeft(msg Data) {
 	logger.Info("user left session", "user", msg.MyUser.Name, "session", s.Id)
+	activeUsers.Dec()
 
 	d := Data{}
 	if s.allUsersVoted() {
@@ -157,6 +176,8 @@ func (s *Session) handleUserVoted(msg Data) {
 	logger.Info("new vote", "user", msg.MyUser.Name, "session", s.Id, "vote", msg.Vote)
 
 	if s.allUsersVoted() {
+		totalEstimations.Inc()
+
 		votes := s.getVotes()
 		average := average(votes)
 		median := median(votes)

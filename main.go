@@ -14,6 +14,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"nhooyr.io/websocket"
 )
 
@@ -75,6 +78,14 @@ var sessions = make(map[string]*Session)
 // TODO: Styling: Dark Mode / Light Mode
 // TODO: Styling: Responsive Design
 
+var httpReqs = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "http_requests_total",
+		Help: "How many HTTP requests processed, partitioned by endpoint path",
+	},
+	[]string{"path"},
+)
+
 func newUserNameCookie(userName string) *http.Cookie {
 	return &http.Cookie{
 		Name:     "username",
@@ -88,8 +99,7 @@ func newUserNameCookie(userName string) *http.Cookie {
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
-	route := "/"
-	logger.Info("incoming request", "route", route)
+	httpReqs.WithLabelValues("GET /").Inc()
 
 	cookieUserName, err := r.Cookie("username")
 
@@ -125,13 +135,12 @@ func index(w http.ResponseWriter, r *http.Request) {
 // request favicon.ico. If this route is not defined, it
 // will match the route for /{id}, getSession
 func getFavicon(w http.ResponseWriter, r *http.Request) {
-	route := "GET /favicon.ico"
-	logger.Info("incoming request", "route", route)
+	httpReqs.WithLabelValues("GET /favicon.ico").Inc()
 }
 
 func newSession(w http.ResponseWriter, r *http.Request) {
 	route := "POST /create-session"
-	logger.Info("incoming request", "route", route)
+	httpReqs.WithLabelValues(route).Inc()
 
 	err := r.ParseForm()
 	if err != nil {
@@ -182,6 +191,7 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 	sessions[sessionId] = session
 	lockSessions.Unlock()
 
+	activeSessions.Inc()
 	go session.handleBroadcast()
 
 	w.Header().Add("HX-Push-Url", "/"+sessionId)
@@ -208,7 +218,7 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 func getSession(w http.ResponseWriter, r *http.Request) {
 	sessionId := r.PathValue("id")
 	route := fmt.Sprintf("GET /%s", sessionId)
-	logger.Info("incoming request", "route", route)
+	httpReqs.WithLabelValues("GET /{sessionId}").Inc()
 
 	cookieUserName, err := r.Cookie("username")
 
@@ -273,7 +283,7 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 func joinSession(w http.ResponseWriter, r *http.Request) {
 	sessionId := r.PathValue("id")
 	route := fmt.Sprintf("POST /join-session/%s", sessionId)
-	logger.Info("incoming request", "route", route)
+	httpReqs.WithLabelValues("POST /join-session/{sessionId}").Inc()
 
 	if _, ok := sessions[sessionId]; !ok {
 		logger.Warn("session does not exist", "sessionId", sessionId)
@@ -321,8 +331,9 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 
 func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 	sessionId := r.PathValue("id")
-
 	cookieUserName, err := r.Cookie("username")
+
+	httpReqs.WithLabelValues("GET /ws/{sessionId}").Inc()
 
 	if errors.Is(err, http.ErrNoCookie) {
 		logger.Error("username-cookie not set. Could not join session")
@@ -451,6 +462,20 @@ func main() {
 	http.HandleFunc("GET /ws/{id}", handleWsConnection)
 
 	http.Handle("GET /scripts/", http.StripPrefix("/scripts/", http.FileServerFS(scripts)))
+
+	reg := prometheus.NewRegistry()
+
+	reg.MustRegister(
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+
+		httpReqs,
+		activeSessions,
+		activeUsers,
+		totalEstimations,
+	)
+
+	http.Handle("GET /metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
 
 	certDir := "/etc/letsencrypt/live/pointing-poker.duckdns.org"
 	cert := path.Join(certDir, "fullchain.pem")
