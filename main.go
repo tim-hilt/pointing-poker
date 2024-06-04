@@ -138,6 +138,11 @@ func getFavicon(w http.ResponseWriter, r *http.Request) {
 	httpReqs.WithLabelValues("GET /favicon.ico").Inc()
 }
 
+func getRobotsTxt(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not found", http.StatusNotFound)
+	httpReqs.WithLabelValues("GET /robots.txt").Inc()
+}
+
 func newSession(w http.ResponseWriter, r *http.Request) {
 	route := "POST /create-session"
 	httpReqs.WithLabelValues(route).Inc()
@@ -456,6 +461,7 @@ var scripts embed.FS
 func main() {
 	http.HandleFunc("GET /", index)
 	http.HandleFunc("GET /favicon.ico", getFavicon)
+	http.HandleFunc("GET /robots.txt", getRobotsTxt)
 	http.HandleFunc("POST /create-session", newSession)
 	http.HandleFunc("GET /{id}", getSession)
 	http.HandleFunc("POST /join-session/{id}", joinSession)
