@@ -98,11 +98,6 @@ func newUserNameCookie(userName string) *http.Cookie {
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	httpReqs.WithLabelValues("GET /").Inc()
 
 	cookieUserName, err := r.Cookie("username")
@@ -139,16 +134,10 @@ func index(w http.ResponseWriter, r *http.Request) {
 // request favicon.ico. If this route is not defined, it
 // will match the route for /{id}, getSession
 func getFavicon(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not found", http.StatusNotFound)
-	httpReqs.WithLabelValues("/favicon.ico").Inc()
+	httpReqs.WithLabelValues("GET /favicon.ico").Inc()
 }
 
 func newSession(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	route := "POST /create-session"
 	httpReqs.WithLabelValues(route).Inc()
 
@@ -226,11 +215,6 @@ func newSession(w http.ResponseWriter, r *http.Request) {
 }
 
 func getSession(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	sessionId := r.PathValue("id")
 	// route := fmt.Sprintf("GET /%s", sessionId)
 	httpReqs.WithLabelValues("GET /{sessionId}").Inc()
@@ -296,11 +280,6 @@ func getSession(w http.ResponseWriter, r *http.Request) {
 }
 
 func joinSession(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	sessionId := r.PathValue("id")
 	// route := fmt.Sprintf("POST /join-session/%s", sessionId)
 	httpReqs.WithLabelValues("POST /join-session/{sessionId}").Inc()
@@ -350,11 +329,6 @@ func joinSession(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleWsConnection(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	sessionId := r.PathValue("id")
 	cookieUserName, err := r.Cookie("username")
 
@@ -479,14 +453,14 @@ func handleWsConnection(w http.ResponseWriter, r *http.Request) {
 var scripts embed.FS
 
 func main() {
-	http.HandleFunc("/", index)
-	http.HandleFunc("/favicon.ico", getFavicon)
-	http.HandleFunc("/create-session", newSession)
-	http.HandleFunc("/{id}", getSession)
-	http.HandleFunc("/join-session/{id}", joinSession)
-	http.HandleFunc("/ws/{id}", handleWsConnection)
+	http.HandleFunc("GET /", index)
+	http.HandleFunc("GET /favicon.ico", getFavicon)
+	http.HandleFunc("POST /create-session", newSession)
+	http.HandleFunc("GET /{id}", getSession)
+	http.HandleFunc("POST /join-session/{id}", joinSession)
+	http.HandleFunc("GET /ws/{id}", handleWsConnection)
 
-	http.Handle("/scripts/", http.StripPrefix("/scripts/", http.FileServerFS(scripts)))
+	http.Handle("GET /scripts/", http.StripPrefix("/scripts/", http.FileServerFS(scripts)))
 
 	reg := prometheus.NewRegistry()
 
@@ -500,7 +474,7 @@ func main() {
 		totalEstimations,
 	)
 
-	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
+	http.Handle("GET /metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
 
 	certDir := "/etc/letsencrypt/live/pointing-poker.duckdns.org"
 	cert := path.Join(certDir, "fullchain.pem")
