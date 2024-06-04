@@ -134,6 +134,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 // request favicon.ico. If this route is not defined, it
 // will match the route for /{id}, getSession
 func getFavicon(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not found", http.StatusNotFound)
 	httpReqs.WithLabelValues("GET /favicon.ico").Inc()
 }
 
